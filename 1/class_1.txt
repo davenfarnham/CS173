@@ -1,0 +1,39 @@
+- 2/3 
+
+	- Core 1 has a trailing 7, Core 2 is all 6's, Core 3 is 0
+	- suggests that Core 3 might only be integer division; 2.0 / 3.0 causes Core 3 to correctly
+	  return .666~
+		- seems Core 3 requires explicit use of floats. Otherwise, it performs integer division
+
+- division by zero
+	
+	- Core 3 catches the error 	
+
+- let x = (0.1 + 0.2) + 0.3;
+  let y = 0.1 + (0.2 + 0.3);
+  x - y
+
+	- will not return 0 for Core's 2 and 3
+		- this might be a case of compiler optimization where, perhaps, Core 1 is copying
+		  a single operation of (0.1 + 0.2) into other expressions to save time. Even if (0.1 + 0.2)
+		  isn't exactly 0.3, copying the exact value into multiple expressions causes x - y to 
+		  evaluate to 0 (like Core 1 does).
+
+	- compiler answer for Core 1?
+
+- Core 1 uses exact numbers but then truncates on printout (*)
+	- Pyret and Racket
+
+- Core 3 is very close to C; shift from integers to floats based on input, such as adding a .
+	- floating point contagion: if you are a float, others around you will become a float
+				    to be able to perform the operation
+
+- Core 2 everything is a floating point number
+	- more like Javascript
+
+- check equality on floating point numbers:
+
+	~1 == ~1	- these are approximate floating point numbers so pyret, for example, will refuse
+			  to compare these things.
+
+			- can use 'within' to compare two floats (compare within a certain epsilon)

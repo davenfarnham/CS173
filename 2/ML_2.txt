@@ -1,0 +1,18 @@
+- new construct: [conditionals]
+
+  - conditional w/ 0 or number != 0
+
+	- if (0) {
+            5
+	  }
+	  else {
+            6
+	  }
+
+		- Core 1 produces an error; expects a boolean. So apparently
+		  Core 1 doesn't represent true and false with numbers like
+		  0 and 1.
+
+		- Core 2 returns 6; correctly evaluates 0 to false
+
+		- Core 3 returns 5; 0 is not treated as false

@@ -1,0 +1,26 @@
+- the only constructs in the mystery language so far are numbers, arithmetic operations, and basic 
+assignment operations (such as let var = exp;).
+
+	- to test how different languages deal with numbers, check boundary cases, so when a number is 0, 
+	  really small, or really big.
+
+		- division by zero: Core 1 and 2 return infinity; Core 3 returns an error.
+
+		- large #'s: it's seems that Core 3 is a 64-bit system that doesn't support bignums. 
+			     if you give it a number > (2^63 - 1), which is the largest number representable
+			     by a 64-bit system it will overflow s.t. 2^63 < (2^63 - 1)
+
+		- decimal #'s: All three Core's support floating point #'s, seemingly with doubles. For a 
+			       simple sum, however, such as (0.1 + 0.2) Core 1 represents it exactly as 
+			       0.3 while Core 2 and 3 are less precise with a trailing digit at the end 
+			       (0.30000000000000004)
+
+			       I'm not sure, but if I had to guess I would think the different Cores have 
+			       varying rules on rounding and truncation. 
+
+			       For example, Core 1 represents (0.1 + 0.2) correctly as 0.3. Yet, given
+			       (0.3333333333333333 * 3) Core 1 returns 0.9999999999999999 while the other
+			       Cores round the result to 1.
+
+			       Overall, it seems Core 1 has a greater deal of precision than the other two
+			       when it comes to floats. 
