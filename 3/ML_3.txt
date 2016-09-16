@@ -1,0 +1,69 @@
+- function names:
+
+	func f (x) {
+  	  x * 2
+	};
+
+	f(2, f(2))
+
+		- 4: Core 1 and 3 produce "wrong # of argument" errors while Core 2 returns 4. It seems Core 2 doesn't check # of
+		  arguments to the function - it'll just use however many it can.
+
+	- you can pass functions around like values 
+	- you can call functions recursively
+	- parameters can be called the same thing
+	- can do assignments within an application	
+	- cannot overload a function: can't have f(x) and f(x, y); the latter declaration will override the former
+	- there are no reserved keywords
+
+	let x = 1;
+
+	func f (y) { x + y };
+
+	let x = 2;
+
+	f(3)
+
+		- Cores 1 and 2 both return 4 while Core 3 returns 5. This relates to the idea of lexical scoping, 
+		  dynamic scoping, and closures.
+	
+			- lexical scoping will map variables to their closest values. If I do:
+
+				let x = 4 in
+				  let f y = x + y in
+				    let x = 2 in
+				      f 3 ;;
+     
+				      --> (7)
+
+			- this evaluates like: 
+
+				((fun y -> 4 + y)) in (* sub 4 in for x *)
+				  let x = 2 in
+				    fun 3 ;;
+
+				((fun y -> 4 + y) 3) (* apply function *)
+
+				--> (7)
+
+			- this behaves very similar to how closures work:
+
+				Closure ((fun y -> x + y), {x : 4}) 
+					- when you hit a lambda, you create a closure
+
+				Apply 3 to the closure: (Closure ((fun y -> x + y), {x : 4})) 3) 
+						
+				(4 + 3) --> (7)
+
+			- Core 3 uses something called dynamic scoping where there's a single dynamic environment
+			  that keeps track of variables and their values. 
+			- you keep around this environment until it's time to evaluate a function. In the above 
+			  example:
+
+				
+				let x = 4 in		dynenv: []
+				  let f y = x + y in	dynenv: [(x, 4)]
+				    let x = 2 in	dynenv: [(x, 2)]
+				      f 3 ;;		((fun y -> 2 + y) 3) 
+				
+				      --> (5)

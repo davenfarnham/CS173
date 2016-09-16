@@ -1,0 +1,12 @@
+- conditionals
+
+	- 2 different ways of doing things: 1) a boolean type and 2) any type works - true or false depends on 
+	  interpretation.
+
+		- truthy / falsy: such as in C, were 1 and 0, though not technically boolean values, will 
+				  evaluate to true and false, respectively.
+
+		- truthy / falsy: convenient; strict: better for error checking
+
+		- truthy / falsy languages make the type system much more difficult because, for each conditional, 
+		  if can take booleans, strings, ints, etc. whereas strict languages can only take booleans.
