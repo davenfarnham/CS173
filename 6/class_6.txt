@@ -1,0 +1,71 @@
+y- lifting
+
+	func f() {
+  	  x + x;
+  	  let x = 3;
+  	  x := 5;
+  	  x + x
+	};
+
+	- I think this means moving x to the start of f such that before the first binary operation
+	  there's a let x = nil;
+
+		func f() {
+  	  	  let x = nil;
+		  x + x;
+  	  	  let x = 3;
+  	  	  x := 5;
+  	  	  x + x
+		};
+
+	- A2 won't return a value tho: x + x is called before it becomes a global.
+
+	if (true) {
+	  let x = 5
+	} else {
+	  let y = 3
+	}
+
+	x & y get lifted; so both branches get lifted even tho both branches don't execute.
+
+- javascript 
+
+	var x3 = 1
+	function f3() {
+	  --> x3 gets lifted here, I think it's undefined, so the below branch evaluates to true
+	  if(!x3) {
+	    var x3 = 2
+	  }
+	  console.log(x3)
+	}
+	f3()
+
+		-> 2, 1
+
+	- lifting to functions (not to braces)
+
+
+	var x4 = 1
+	function f4() {
+	  x4 = 10
+	  return
+	  function x4() {}
+	}
+	f4()
+
+	console.log(x)
+
+		-> 1
+
+- python
+
+	def f1():
+	  x1 = "local variable"
+	  return x1
+
+	print(f()) 
+
+		- local variable (as expected)
+
+	- lifting: static scoping
+	- python: dynamic
