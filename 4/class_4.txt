@@ -1,0 +1,7 @@
+- all three languages check the parameters (type, evaulaute expressions) before checking for arity
+	- arity: the number of arguments a function takes
+
+	func f (x, y, z)
+
+	f(1, 2, 3, 4 + "x") --> will return an error
+

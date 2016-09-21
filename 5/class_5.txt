@@ -1,0 +1,4 @@
+- if we have an exp. in an ADT, should we add functions to it or change their type?
+	- if we allow funcs to be expressions, they have to fit in whereever
+	  expressions are allowed (such as on the left-hand side of a plus), 
+	  they must always return values, etc.

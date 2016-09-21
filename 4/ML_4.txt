@@ -1,0 +1,32 @@
+classifier 1: if (let x = true; true) { x } else { false }
+
+    	- like C
+	- Core 1 and 2 return unbound identifiers
+	- Core 3 returns nil
+	- Core 4 return true
+
+classifier 2: x := 5; x
+
+	- Core 1 and 3 return unbound identifier
+	- Core 2 returns 5
+	- Core 4 "cannot assign to unbound"
+		
+classifier 3: func f(x) { x }; f(let x = 10; x) + x
+
+	- Core 1, 2, 3 return unbound identifier
+	- Core 4 returns 20
+
+
+classifier 4: func f(x) { x + y }; let y = 10; f(5)
+
+classifier 5: func f(x) { let x = 10; x }; let x = 5; f(10) + x
+
+	- Core 4 seems to use a dynamic environment s.t. changing the value of a variable anywhere
+	  permeates across the program
+
+	- Core 3 seems to have a set of variables and then, perhaps, a separate environment mapping 
+	  variables to values. classifier 4, then, would notice that y was a variable but it wouldn't
+	  know its value. It would therefore do the binary operation "nil + 5", which returns an error.
+
+	- The difference between Core 1 and Core 2 seems to be how they deal with assignments. Core 2 allows 
+	  assignments outside of "let" bindings.
