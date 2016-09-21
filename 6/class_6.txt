@@ -49,7 +49,7 @@ y- lifting
 	function f4() {
 	  x4 = 10
 	  return
-	  function x4() {}
+	  function f4() {}
 	}
 	f4()
 
