@@ -28,6 +28,9 @@ y- lifting
 
 	x & y get lifted; so both branches get lifted even tho both branches don't execute.
 
+	- so lambda lifting is when you raise a function out of its currents scope into a more global scope
+		- apparently this is something some compilers do
+	
 - javascript 
 
 	var x3 = 1

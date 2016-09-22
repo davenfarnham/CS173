@@ -22,7 +22,7 @@ classifer 4: func f(x) { if (x > 5) { x } else { g(x + 1) } }; func g(y) { f(y);
 	- Core 2: timed out
 	- Core 3: 6
 
-func f(y) { if (y == 3) { y } else { if (f(y + 1) == 3) { 4 } else { y } } }; f(2)
+classifier 5: func f(y) { if (y == 3) { y } else { if (f(y + 1) == 3) { 4 } else { y } } }; f(2)
 	- Core 1: 4
 	- Core 2: timed out
 	- Core 3: 3
