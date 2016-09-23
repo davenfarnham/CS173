@@ -1,0 +1,18 @@
+- Core 3: uses goto statements for function calls; no way to get back to the calling function
+	- leave you to manage the stack
+
+- Ask Prof. Reiss: tail calls
+
+		fun f () = g(5);
+
+		fun g(x) = x + 2;
+
+		g should just return to the return address of f:
+
+		(g -> end) instead of (g -> f -> end) since nothing more
+		is done in the fun f.
+
+
+- Core 1 is normal
+
+- Core 2 is like Cobalt; preallocate one frame per procedure - you can't recur
