@@ -1,0 +1,2 @@
+classifer 1: let x = lambda(y) { x(y) }; x(5)
+
