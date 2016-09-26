@@ -1,0 +1,19 @@
+classifer 1: let x = lambda(y) { x(y) }; x(5)
+
+	- Core 1: Unbound identifier x
+	- Core 2: the program timed out
+
+	- the big thing I wanted to check was whether you could force a lambda function to 
+	  be recursive. It seems like Core 1 doesn't allow you to do this, while Core 2 does.
+
+	  My first thought was that possibly the sequences of evaluation in the Cores were different.
+	  So, for example, Core 2 might evaluate the left hand side of the let first s.t. it knows
+	  x is a function while Core 1 doesn't. I don't think this is the case, however, seeing how
+	  let x = lambda(y) { x }; x successfully returns a function for both cores.
+
+	  I think, essentially, what is going on is Core 2 allows lambdas to be self-referential such that they
+	  can point back to themselves, whereas Core 1 doesn't. I would think the interpreter or
+	  compiler takes all lambdas and converts them into named functions. If the x() inside the lambda in
+	  classifier 1 got the same name as the lambda, this would be equivalent to func f(x) { f(x) }; 
+	  if the x() were renamed, however, it might return an unbound identifier. Just a thought, though!
+

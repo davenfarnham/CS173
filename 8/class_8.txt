@@ -1,0 +1,6 @@
+- func(x) { lambda() {x} }; let x = 5; let x = 17; a(10)() // dynamic scoping vs. lexical scoping
+
+	- Core 1: 10
+	- Core 2: 17
+
+- answer to ml_6: Core 1 is statically scoped, Core 2 is dynamically scoped.
