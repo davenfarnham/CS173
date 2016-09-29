@@ -1,0 +1,35 @@
+- when are variables in scope?
+
+	- any variables defined in let expressions above the function are in scope:
+
+		let x = 10 in
+		  let y = 5 in
+		    (fun z -> z + x + y);; // since this is an anonymous function, x and y would be in scope
+					      plus the parameter to lambda; all variables accessible. 
+
+		fun z = let x = 10 in 
+			  let y = 5 in 
+			    x + y + z;	   // same here
+
+		fun a () = x + y;; // should be an error; a is in scope but not much else
+
+- other test cases:
+	
+	- binary test cases: 
+		- let x = 5 in 
+		    ((fun z -> x + z) 5) + ((fun y -> y + @) 5) // [x, y]
+
+	- conditionals:
+		- if (let x = true in @) (let y = 5 in y) (let z = 6 in z)	// x
+
+		- if (let x = true in x) (let y = 5 in @) (let z = 6 in z)	// y
+
+		- if (let x = true in x) (let y = 5 in y) (let z = 6 in @)	// z
+
+- sets:
+
+	- I think the only way my code makes sense is if sets are passed to functions via
+	  copies (they can't be passed by reference). This is why if calc-helper(expr, 
+	  bound) doesn't return true, bound from the calling function is unchanged.
+
+- how could you extend this to more general cases?
