@@ -1,0 +1,17 @@
+- a couple questions:
+
+	- how does a language like OCaml deal with types, where you don't have
+	  to give parameters to a function a type? Does it also have a
+	  type environment?
+
+	- we talked a little about desugaring last week. Does this increase 
+	  the time complexity of our program?
+
+		- if we desugar (minus x y) into (plus x (times y -1)) that
+		  seems to add a recursive call to interp
+
+- type checking
+
+	- take an expression and return a type
+
+	- "let" should update the type of a variable within the environment
