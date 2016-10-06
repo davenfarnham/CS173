@@ -1,0 +1,18 @@
+- interpret should throw 4 errors:
+
+	- (1) err-unbound-id gets thrown if the name you're looking for isn't in the environment
+	- (2) C.err-bad-arg-to-op is thrown in e-op-helper if you try to concat or call str= on anything but a string
+	      and equivalently + or num= on anything but a number
+	- (3) unbound-id
+	- (4) not-a-function
+
+- tests:
+
+	- equivalent to: (lam x -> x + y) (let y = 4 in y)
+		- (lam x (+ x y)) (let (y 4) y)					// unbound id
+		- (lam x (let (y 5) (+ x y))) (let (y 4) y)			// 9
+
+		- (let (x 1) (let (f (lam y (+ x y))) (let (x 2) (f 3))))
+
+	- (lam x (lam y (+ x (+ y z))))						// unbound id
+	- (lam x (lam y (+ x y)))						// function
