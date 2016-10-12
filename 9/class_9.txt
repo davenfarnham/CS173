@@ -4,13 +4,38 @@
 	  to give parameters to a function a type? Does it also have a
 	  type environment?
 
-	- we talked a little about desugaring last week. Does this increase 
+	* we talked a little about desugaring last week. Does this increase 
 	  the time complexity of our program?
 
 		- if we desugar (minus x y) into (plus x (times y -1)) that
-		  seems to add a recursive call to interp
+		  seems to add a recursive call to interp. Would it be 
+		  faster to simply add to our ADT?
+			- like in the pset, you have addition. Faster to
+			  add minus instead of trying to do something
+			  else with sugaring?
 
-- type checking
+	* question about fun_helper: 
+
+		- (let (x (lam y (x y))) (x 5))
+
+		  - (lam x (x 5)) (lam y (x y))
+
+		    - if you immediately return a lamV upon evaluating
+		      (lam y (x y)) then you won't know x is unbound.
+
+		      - interp (x 5) env.add(x -> lam y (x y)) // which results in
+							          a loop.
+
+- failed tests:
+
+	- (x 5) [x -> lamV(y, (x y), [])]
+	  - lamV(y, (x y), []) (5) 
+	    - (x 5) -> x should be unbound, since in this environment it's unbound
+
+	- apparently they want something like (lam x (x y)) to simply return a lamV, not
+   	  throw an error.
+
+- type checking:
 
 	- take an expression and return a type
 

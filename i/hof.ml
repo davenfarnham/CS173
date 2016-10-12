@@ -83,3 +83,61 @@ let map2 f lst1 lst2 = fold_left (fun x y -> match x with
 				             | (None, None) -> y
 				             | (Some hd, Some hd') -> (f hd hd') :: y) [] (zip lst1 lst2)
 ;;
+
+(* from class *)
+let rec list_longer l1 l2 = 
+  match (l1, l2) with
+  | ([], []) -> false
+  | ([], _ :: _) -> false
+  | (_ :: _, []) -> true
+  | (_ :: tl1, _ :: tl2) -> list_longer tl1 tl2
+;;
+
+assert(list_longer [] [] = false) ;;
+assert(list_longer [1;2] [3;4] = false) ;;
+assert(list_longer [1;2] [3] = true) ;;
+assert(list_longer [1;2] [3;4;5] = false) ;;
+
+(* from class *)
+let intersect l1 l2 = 
+  fold_left (fun x y -> (fold_left (fun x' y' -> if x = x' then x :: y' else y') [] l2) @ y) [] l1 ;;
+
+let intersect' l1 l2 = 
+  fold_left (fun x y -> (filter (fun x' -> x = x') l2) @ y) [] l1 ;;
+
+let rec print_list l = 
+  match l with
+  | [] -> ()
+  | hd :: tl -> print_int hd; print_string "\n"; print_list tl
+;;
+
+assert(intersect' [] [] = []) ;;
+assert(intersect' [1;2;3] [1;2] = [1;2]) ;;
+assert(intersect' [1;2;3;4;5;6;7] [1;2;7;4] = [1;2;4;7]) ;;
+assert(intersect' [1;2;7;4] [1;2;3;4;5;6;7]  = [1;2;7;4]) ;;
+
+assert(intersect' [] [] = intersect [] []) ;;
+assert(intersect' [1;2;3] [1;2] = intersect [1;2;3] [1;2]) ;;
+assert(intersect' [1;2;3;4;5;6;7] [1;2;7;4] = intersect [1;2;3;4;5;6;7] [1;2;7;4]) ;;
+assert(intersect' [1;2;7;4] [1;2;3;4;5;6;7]  = intersect [1;2;7;4] [1;2;3;4;5;6;7]) ;;
+
+(* from class *)
+let list_reverse l = fold_left (fun x y -> y @ [x]) [] l ;;
+
+assert(list_reverse [1;2;3] = [3;2;1]) ;;
+
+let rec fold_right f acc l = 
+  match l with
+  | [] -> acc
+  | hd :: tl -> fold_right f (f hd acc) l
+;;
+
+let rec is_set l = 
+  match l with
+  | [] -> true
+  | hd :: tl -> (fold_left (fun x y -> if x = hd then false && y else true && y) true tl) && is_set tl
+;;
+
+assert(is_set [1;2;3] = true) ;;
+assert(is_set [1;2;3;2] = false) ;;
+assert(is_set ["a";"b";"c"] = true) ;;

@@ -1,0 +1,15 @@
+- dynamic side of pyret doesn't want to interpret both sides of an if-expression since one branch might 1) raise 
+an error, 2) change state, 3) do something else that we don't want to do and are, in fact, trying to avoid 
+with the conditional.
+
+- requiring types (for example requiring bools in the cond expr. of an if) seems to be more of a help to 
+developers - restricting types to enforce certain rules and prevent mistakes.
+
+- exception handling by returning different kinds of values
+
+	if(expr):
+	  return actual answer; // could be string, bool, anything
+	else
+	  return -1;  // for error
+
+	return union of types: (actual answer | number)
