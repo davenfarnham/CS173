@@ -1,0 +1,22 @@
+classifier 1: func f (x) {x := 5}; let x = 4; f(x); x
+
+	- 1: 4
+	- 2: 5
+	- 3: 5
+
+	- passing x in as a parameter, the function f seems to get its own copy 
+	  of x. f changes the value of x, but since it's separate from the calling
+	  function's x this doesn't affect the caller's x's initial value.
+
+	- parameters are different: the above written as:
+		let x = 4; func f() {x := 5}; f(); x
+	
+	  returns 5 for every core.
+
+classifier 1*: let x = 4; func f(x) {x := x - 1; x}; func g(x) {x := x - 1; x}; g(x) + f(x) + x
+	
+	- 1: 10
+	- 2: 7
+	- 3: 7
+
+

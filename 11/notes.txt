@@ -1,0 +1,6 @@
+- type-checking actually makes programs faster and smaller 
+	(benefits in both time and space complexity)
+
+	- how does this work?
+
+		- 
