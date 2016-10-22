@@ -3,4 +3,4 @@
 
 	- how does this work?
 
-		- 
+		- you don't have to check whether inputs are correct; 

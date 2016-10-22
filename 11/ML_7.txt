@@ -1,4 +1,4 @@
-classifier 1: func f (x) {x := 5}; let x = 4; f(x); x
+classifier 1: func f (x) { x := 5 }; let x = 4; f(x); x
 
 	- 1: 4
 	- 2: 5
@@ -9,14 +9,117 @@ classifier 1: func f (x) {x := 5}; let x = 4; f(x); x
 	  function's x this doesn't affect the caller's x's initial value.
 
 	- parameters are different: the above written as:
-		let x = 4; func f() {x := 5}; f(); x
+		let x = 4; func f() { x := 5 }; f(); x
 	
 	  returns 5 for every core.
 
-classifier 1*: let x = 4; func f(x) {x := x - 1; x}; func g(x) {x := x - 1; x}; g(x) + f(x) + x
+classifier 1*: let x = 4; func f(x) { x := x - 1; x }; func g(x) { x := x - 1; x }; g(x) + f(x) + x
 	
 	- 1: 10
 	- 2: 7
 	- 3: 7
 
+classifier 2: let x = 5; func f (y) { x := 6 }; f(x); x
 
+(* these two actually differentiate everything *)
+classifier 3: 3.1: let x = 5; func f (y) { x := 6; y }; f(x)
+              3.2: let x = 5; func f (y) { x := 6; y }; f(x); x
+	      3.3: let x = 5; func f () { x := 6 }; f(); x
+
+		- variables; renaming; copying; etc
+
+		- what is the expected behavior?
+
+			- it depends if you are passing parameters by reference or by value (so a copy).
+			  If you're passing by copy, you'd expect 3.1 to return 5. If you're passing by
+			  reference, you'd expect it to return 6.
+
+				3.1:
+
+					Core 1: 5 		
+					Core 2: 6
+					Core 3: 5
+
+			  core 1 and 3 seem to pass variables to function by value instead of by memory location,
+			  i.e. reference. 
+
+			- You'd expect a change to a mutable variable to save state, i.e. have lasting effects.
+
+				3.2:
+
+					Core 1: 6
+					Core 2: 6
+					Core 3: 5
+
+			  the behavior you'd expect comes from Cores 1 & 2, but 3 seems a little weird. If you 
+			  don't pass f() a parameter, though, you get the expected behavior from all cores:
+
+				3.3:
+
+					Core 1: 6
+					Core 2: 6
+					Core 3: 6
+
+					let x = 5; func f (y) { x := 6 }; f(x); x		{6, 6, 5}
+					let x = 5; func f (x) { x := 6 }; f(x); x		{5, 6, 6}
+
+
+			- If you have a function f() that takes no parameters, then it's clear that if you 
+			  update a mutable variable within the body of that function f, the variable within
+			  the function must have some larger scope outside of f. So, for example:
+
+				let x = 10; func f() { x := 5 }; f(); x
+
+			  will return 5 for all cores.
+
+			- Things get a little weird when you start passing parameters to functions since it's
+			  unclear if you're passing my reference or by value. It seems Core 2 always passes by
+			  reference:
+
+				let x = 5; func f (x) { x := 6 }; f(x); x
+				let x = 5; func f (y) { x := 6 }; f(x); x
+
+			  both return 6 for Core 2.
+
+			  Core 1 passes by copy. So the parameter to the function is a copy of whatever is getting 
+			  applied to it. So, for example:
+
+				let x = 5; func f (y) { x := 6 }; f(x); x 
+	
+			  y effectively becomes a new variable - so there's really only one x in scope, which 
+			  means you'd expect Core 1 to return 6
+
+				let x = 5; func f (x) { x := 6 }; f(x); x
+
+			  Here, you're passing a copy of x, so effectively a new variable to function f. The 
+			  closest x within scope in f is the copy of the x you originally declared with "let x = 5;"
+			  meaning that although you're changing its value, you're really only changing the copy
+			  and not the original. Core 1, therefore, returns 5. This is more clearly illustrated with
+			  this: 
+
+				let x = 5; func f (y) { y := 6 }; f(x); x
+
+			  Advanced 1 (Core 3) is a bit weird. If the parameter has the same name as the variable, it
+			  seems to pass by reference:
+
+				let x = 5; func f (x) { x := 6 }; f(x); x -> Advanced 1 (6)
+
+			  If the parameter has a different name, though, it seems to pass by value:
+
+				let x = 5; func f (y) { x := 6 }; f(x); x -> Advanced 1 (5)
+
+
+
+				let x = 5; let z = 4; func f (a, b) { x := 6; z := 5 }; f(x, z); x + z -> 9
+
+			  passes x, z by copy, the function then updates the original x & z, then
+			  once the function returns it unifies the original x & z with the values of the parameters
+			  a and b, which haven't been updated.
+
+				let x = 5; let z = 4; func f (x, z) { x := 6; z := 5 }; f(x, z); x + z -> 11
+
+
+				let x = 5; let z = 4; func f (a, b) { a := 6; b := 5; x + z }; f(x, z); x + z -> 11
+				let x = 5; let z = 4; func f (a, b) { a := 6; b := 5; x + z }; f(x, z) -> 9
+
+			  It's almost like it passes by copy and then unifies once the function returns.
