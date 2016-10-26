@@ -1,0 +1,11 @@
+classifier 1: let y = {"x": 11}; func f (y) { y["x"] := 10; y["x"] }; f(y); y
+
+	1: 10		(* pass by reference *)
+	2: 11		(* pass by copy *)
+	3: 11		(* pass by copy *)
+
+classifier 2: let a = { "x": 4 , "y": 2 }; a["x"] := a; func f(k) { k["y"] := 3 }; f(a); a["x"]
+
+	1: {"x": {"x": ..., "y": 3}, "y": 3}
+	2: Error: timed out				(* it seems it has to traverse all elements *)
+	3: {"x": {"x": ..., "y": 2}, "y": 2}		(* maybe this passes a reference to a copy *)

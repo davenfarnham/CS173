@@ -1,0 +1,21 @@
+- When a variable is mutable (in that it changes state), you are effectively adding
+  a new factor into your program: time
+
+	let x = 4 in
+	  ((x := 3; x) + x);
+
+		-> If you evaluate left to right, this'll return 6. Right to left, this'll return 7.
+		   If you're unsure which side will evaluate first, this effectively introduces a
+		   race condition into your program since the outcome will depend on the order in which
+		   the two operands are evaluated.
+
+- mutable variable (advanced 1): call by copy result
+
+	- so, if you're passing variables by reference, then any function is free to make lasting
+	  state changes, which can be super confusing.
+
+	- I think the argument for cbcr is that a function gets a snapshot of a variable and can then
+	  change that variable, but the value it changes will only be reconciled (through aliasing)
+	  when the functoin returns. Like he says, this is kind of like a single-threaded lock.
+
+- the general consensus is that you have object aliasing but not variable aliasing.

@@ -1,0 +1,40 @@
+- basics:
+
+	- In normal type-inference, there are two phases:
+
+		(1): you generate a set of constraints
+		(2): you solve (or rather, compare) this constraints
+
+	- I think normally, the list or set of constraints is an [expression -> type]. This kind of makes sense, 
+	  since when you're checking these constraints you can check to make sure whatever expression you come
+	  across either equals the constraint or falls within a subset of that constraint. So, for example:
+
+			fun f (x) { x };
+
+	  x can be anything, so if you come across the program:
+
+			f (5)
+
+	  5 is a subset of anything, so this type checks.
+
+	- In the problem set, I think what's going on is you don't map [expressions -> type], but rather for each expression
+	  you give it a new string name, s.t. [name -> type].
+
+	- I think this should be fine when you are checking constraints as long as you check constraints in the same order as
+	  you added them. 
+	
+	- I think every where you see t-expr(e) in the book, you should replace that with fresh-var():
+		- you're basically renaming all expressions with variables
+
+- ADT:
+
+	- gen-constraints returns a ConstraintSet
+
+	- a ConstraintSet is a list of constraints
+
+	- a constraint is a (C.TypeVar, ty :: C.Type) where:
+
+			- TypeVar:	String (probably something you make with fresh-var()) 
+			- Type: 	
+				- a type is 1) either a t-var which is a string
+					    2) or a t-con which is a (Constructor, List of types)

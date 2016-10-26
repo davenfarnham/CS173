@@ -1,3 +1,5 @@
+(*** notes ***)
+
 classifier 1: func f (x) { x := 5 }; let x = 4; f(x); x
 
 	- 1: 4
@@ -62,6 +64,8 @@ classifier 3: 3.1: let x = 5; func f (y) { x := 6; y }; f(x)
 
 					let x = 5; func f (y) { x := 6 }; f(x); x		{6, 6, 5}
 					let x = 5; func f (x) { x := 6 }; f(x); x		{5, 6, 6}
+
+(*** possible writeup ***)
 
 
 			- If you have a function f() that takes no parameters, then it's clear that if you 
