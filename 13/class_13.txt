@@ -1,0 +1,42 @@
+- the argument he's making is that once you have mutable variables, 
+  you essentially need two different data structures:
+
+	1) maps names -> locations	(stack)
+	2) maps locations -> values	(heap)
+
+  data structure one deals with the environment kind of like it's always done. So, 
+  for example, if I have the program:
+
+	let x = 5 in 
+          let f y = x + y in
+	    let x = 6 in
+	      f(4) ;;
+
+				this should equal 9, since the closure at the point of function 
+				declaration means f's environment only contains [x -> {100}] where
+				here I'm saying x is at memory location 100.
+
+				so really there are two environments: 	[x -> {100}]
+									[{100} -> 5]
+
+	let x = 5 in 
+          let f y = x := 7; x + y in
+	    let x = 6 in
+	      f(4) ;;
+
+				[x -> {100}]
+				[{100} -> 7]
+
+  what's nice about this is that when you change the value at a memory location, this is a persistent change;
+  once that mapping goes away the memory doesn't get zero'd.
+
+  However, since you're using an environment to maintain static scoping, if I try to access the x that references {100}
+  from something out of scope, even though {100} -> 7 still points to a value, the names -> locations environment should
+  return an unbound variable warning. 
+
+- lvalue error in C: when you are getting a memory location and not a value (perhaps when you forget to dereference something)
+
+- print equality vs alias equality:
+
+	- pe: they basically have the same value
+	- ae: they have the same memory location
