@@ -1,0 +1,25 @@
+- we talked a lot about objects and subtyping. Let's say I have 3 objects:
+
+	O1: {"a" : 1}	O2: {"a" : 1, "b" : "hi"}   O3: {"a" : 1, "b" : "hi", "c" : 2}
+
+  you might expect O1 to be a subset of O2 to be a subset of O3, but it's actually the opposite.
+
+  O3 <: O2 <: O1
+
+  so basically any function that can accept an O1 can also accept an O2 or an O3.
+
+	f(y :: O1) { y.a := 3 };
+        f(_)  
+
+  let's say we restrict the objects s.t. now you're trying to pass in an object of type O3
+  to a function that expects an object of type O2.
+
+	f(y :: O2) { y.c := 3 }; <--- type error here; y.c does exist but it shouldn't be accessible
+        f(O3)  
+
+  let's switch it around and say:
+
+	f(y :: O2) { y.b := 3 };
+        f(01)  <--- type error here, since O1 is not a subtype of O2
+
+  so basically, I can pass any subtype of an object to a function legally.
