@@ -1,0 +1,41 @@
+- so I'm not sure what the point of having the type-checker is:
+
+	- let a = 1 in
+            lookup {"x" : a} @ ;;	-> [set: "x"]
+
+	- let a = 1 in
+	    lookup {"x" : b} @ ;;	-> type-error
+
+	- I think the goal is to use a bound environment like I did in calc-locals (** look at this again **)
+
+- lookup (let (a {"x" : (lookup {"y" 2} @)}) a) x 
+
+- maybe the key is to make the environment strings -> types; that way since lambda gives you an arg-type, you can use that
+
+- am I writing a type-checker or a calc-fields? should I be checking binary operations, extends, etc? If not, when am
+  I supposed to be using my type-checker? should I be keeping around an environment of variables to subst?
+
+- i think you should have a bound of type-variables:
+	- if you hit lookup rec @; -> return type-check on rec, this will look very similar to the set you need to return;
+          turn t-rec() -> set
+
+- (let (a 1) (let (b a) (+ a b)
+
+- let a = {x : {c 1}} in
+    lookup (extend lookup a x (d 2)) @; --> ["c", "d"]
+
+- (lookup (let a = 1 + 2 in {"x" : a}) @)
+
+- (lookup (let a = extend {"x" : 1} ("y" 2) in a) @)
+
+- (lam x (lookup (extend x ("y" 2)) @)) ({"x" : 1})
+
+- ((lam x -> lam y -> x + y) 1) 2)
+	x -> 1
+	y -> 2
+
+- (lam x (lam y (lookup (extend x b y) @)) 2) {"a" : 1}
+
+	- (lam y (lookup (extend {"a" : 1" b y) @)) 2
+
+	- ["a", "b"]
