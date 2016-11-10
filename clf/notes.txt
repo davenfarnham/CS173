@@ -31,11 +31,23 @@
 - (lam x (lookup (extend x ("y" 2)) @)) ({"x" : 1})
 
 - ((lam x -> lam y -> x + y) 1) 2)
+  ((lam (x : Num) ((lam (y : Num) (+ x y)) 1)) 2)
 	x -> 1
 	y -> 2
+
+	[2; 1]
 
 - (lam x (lam y (lookup (extend x b y) @)) 2) {"a" : 1}
 
 	- (lam y (lookup (extend {"a" : 1" b y) @)) 2
 
 	- ["a", "b"]
+
+- extend problem: you'll replace a with (lookup ... ) then call calc-locals-helper
+	- (let (a (lookup (record (b 1)) @)) (extend a c 2))
+
+- (let (a (record (b 1))) (lookup (extend a c 2) @))
+
+- (extend (lookup (record (a (record (b 1)))) a) b 2)
+
+- (lookup (extend (record (a 1)) b 2) @)
