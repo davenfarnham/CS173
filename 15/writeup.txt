@@ -1,0 +1,85 @@
+classifier 1: 
+
+	class A extends Object {
+	  field bar: Num;
+	  method foo(arg: Num) -> Num {
+	    -1
+	  }
+	}
+	
+	class B extends A {
+	  field bar: Num;
+	  method foo(arg: Num) -> Num {
+	    1
+	  }
+	}
+
+	let a : A = new B();
+	a.foo(20)
+
+core 1: -1
+core 2: 1
+core 3: -1
+
+- so here, B is a subtype of A, but since you identify 'a' as of type A, cores 1 and 3 don't utilize method foo from
+  the extended type B.
+
+  it's almost as if cores 1 and 3 use the interface from A, since 'a' is of type A, whereas core 2 hides any methods 
+  in B that are not also defined in A. Since every field in A is also in B, it doesn't hide anything, but this causes A's method foo
+  to be overwritten by B's identical method header.
+
+classifier 2:
+
+	class A extends Object {
+	  field bar: Bool;
+	  method foo(arg: Num) -> Bool {
+	    this.bar
+	  }
+	}
+
+	class B extends A {
+	  field bar: Bool;
+	  method foo(arg: Num) -> Bool {
+	    this.bar
+	  }
+	}
+
+	let a : A = new B();
+	a.bar := true;
+	a.foo(20)
+
+core 1: false
+core 2: true
+core 3: true
+
+- it's almost as if 'this' refers to the extended class B for core 1, whereas is refers to the parent class in cores 2 and 3.
+
+classifer 3:
+
+        class Person extends Object {
+          field age: Num;
+          method check(years: Num) -> Num {
+            this.age
+          }
+        }
+
+        class Student extends Person {
+          field age: Bool;
+        }
+
+        let x : Student = new Student();
+        x.check(5)
+
+core 1: 0
+core 2: 0 
+core 3: false
+
+- in cores 1 and 2, this refers to the parent class whereas in core 3, it refers to the class it is identified as.
+
+Conclusions:
+
+	for core 3, it's clear 'this' refers to the extended class, and not just the parent class. So, for example,
+	in classifier 3, 'this' refers to the "Student" class and not just the "Person" class it is used in.
+
+	this also comes up in classifier 2. Classifier 1 showed that it seems cores 1 and 3 care more about the type of
+	the interface the object is declared as, over the actual object it is initialized as. 

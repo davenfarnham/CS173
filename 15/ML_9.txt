@@ -1,0 +1,130 @@
+- classifier 1:
+
+-------------------------------------
+        class Person extends Object {
+          field age: Num;
+          method is_older_than(years: Num) -> Bool {
+            this.age > years
+          }
+        }
+
+        class Student extends Person {
+          field age: Bool;
+        }
+
+	let x : Student = new Student();
+	x.is_older_than(5)
+
+	- 'this' seems to refer to different things
+	- maybe untyped (proxy)
+
+-------------------------------------
+	class Person extends Object {
+	  field age: Num;
+	  method check(years: Num) -> Num {
+	    this.age
+	  }
+	}
+
+	class Student extends Person {
+	  field age: Bool;
+	}
+
+	let x : Student = new Student();
+	x.check(5)
+
+-------------------------------------
+	class Thing extends Object {
+  	  field age: Num;
+	}
+
+	class Person extends Thing {
+	  field weight: Num;
+	}
+
+	class Student extends Person {
+	  field weight: Bool;
+	}
+
+	class P extends Object {
+	  method check(p: Person) -> Person {
+	    p
+	  }
+	}
+
+	let p : P = new P();
+	let s : Student = new Student();
+	let per : Person = new Person();
+	p.check(s).weight
+
+- classifier 2:
+
+	- try example from class; see what kind of object it returns
+
+
+
+- tryout:
+
+	- so it does effectively hide fields:
+
+
+	class Thing extends Object {
+  	  field age: Num;
+	}
+
+	class Person extends Thing {
+	  field weight: Num;
+	}
+
+	class Student extends Person {
+	  field gpa: Num;
+	}
+
+	class P extends Object {
+	  method check(p: Person) -> Thing {
+    	    p
+  	  }
+	}
+
+	let p : P = new P();
+	let s : Student = new Student();
+	p.check(s)				// doesn't work even though Student <: Person
+
+
+	class Q extends Object {
+  	  method checker(s: Student) -> Num {
+    	    s.gpa
+  	  }
+	}
+
+	let p : P = new P();
+	let q : Q = new Q();
+	let s : Student = new Student();
+	let r : Thing = p.check(s);
+	r
+
+	- subtypes can override field names
+
+
+- writeup
+
+	- it seems 'this' sometimes refers to the subtype and sometimes refers to the class it is extending. I
+	  was trying to play around with a function that takes an object, restricts it, and then trying to access
+	  the original objects fields. For example:
+	
+		class Thing extends Object() {
+
+		}
+
+		class Person extends Thing() {
+
+		}
+
+			m(takes a Person) -> returns a Thing; can I then still access all the fields of Person?
+
+				- this doesn't work. I think that because this is a typed language, there's adequate
+				  hiding of fields.
+
+	- what else would I think?
+
+		- Student <: Person

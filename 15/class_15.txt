@@ -1,0 +1,47 @@
+- subtyping
+	
+	- when thinking about subtypes, the more fields you define the more you constrict the kinds of objects you can use.
+
+	- so let's say a function expects an object with two fields defined: {a, b}. {a, b} is a subtype of both {a} and, {}, since
+	  any function that expects either {a} or {} will be able to accept {a, b}. A function that expects an object {a, b, c}, though, 
+	  {a, b} is not a subtype of this since the function could reference field 'c', which {a, b} doesn't have.
+
+- let's say you have two function: 
+
+					fa :: (C -> D)
+
+				    h(ff :: (A -> B))
+
+				   	h(fa) -> ?
+
+		- what is the relationship between A & C?
+
+			- C has to at least accept some of the fields of A, so A <: C:
+
+			- if A accepts {a, b, c}, then C could be {a, b}, {a}, {}, etc but it can't be {a, b, c, d} - the function
+			  h might add on another field before passing the object to fa, but there's no promise it will. So, A <: C 
+
+		- what is the relationship between D & B?
+
+			- D <: B: h(fa) will return something of type D, which means D has to be a subtype of B; if B returns {a, b},
+			  then D could return {a, b, c} but not {a} or {} or something
+
+
+- object capabilities:
+
+	- I think what he was talking about, was how, if I download a package from the internet, I don't want to give it ambient authority, i.e.
+	  I don't want it to be able to import other packages and then run as me, the user. 
+
+		- this seems like a simple idea, but if I dl'd scipy from the internet and then run it, it's running as me, the user. And me, the
+		  user, has the ability to import other packages that I might not want to give scipy access to; like the ability to open directories,
+		  push info the internet, etc.
+
+	- what a lot of phones do now is ask you for permission when you open an app. A better idea, though, is to endow scipy with object capabilities
+	  by requiring you to call it with parameters. Now, through the parameters you pass to it you give it the kind of permissions you want. This
+	  is more explicit as you have to pass it parameters.
+
+
+		- POLA: principle of least authority
+
+	- so instead of calling scipy, you call an object with scipy in it that also has some other logic. For example, it might limit the number of
+	  times you can call scipy to prevent it from hogging and overloading your file system.
