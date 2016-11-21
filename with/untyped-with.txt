@@ -1,0 +1,8 @@
+Part 2: Untyped is, much like last week, not possible. Think about this case:
+
+((lam x (with x @)) (if ... (record (a 1)) (record (b 2))))
+
+where “…” is some boolean expression. Without some kind of type annotation on 
+“with” it’s not possible to know what this should return. If you started 
+evaluating things it would be different, but this is not possible to do 
+statically.
