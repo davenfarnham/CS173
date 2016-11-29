@@ -1,0 +1,124 @@
+classifier 1: func rec(n) {if n < 0 {0} else {n + rec(n - 1)}}; rec(10)
+
+	- 55
+	- time out
+	- time out
+	- 55
+
+	- this is weird; if you change the different to 'n - 2' then all cores evaluate correctly
+
+classifier 2: let a = {"age": 28}; a["age"] := 29; a["age"] + 12
+
+	- 41
+	- 41
+	- 40
+	- 41
+
+	- the difference in core 3 could be for a lot of reasons:
+
+		- you're evaluating the binary expression before the reassignment
+		- you're dealing with a copy instead of a reference
+
+			- let a = {"age": 28}; a["age"] := 29; a["age"]
+
+				- core 3 returns 28, so this doesn't necessarily involve binary expressions. It
+				  seems it's more likely records in this core aren't passed by reference
+
+				- ** So this means that core 3 is evaluating the reference before it is passing it anywhere **
+
+
+classifier 3: let a = {"age": 28}; func f(a) { a["age"] := 29; a["age"] }; a["age"] + f(a)
+
+classifier 4: let a = {"b" : 1}; func g(a) { a["b"] := a["b"] + 1; a["b"] }; func f (x, y) { x*x + y*y }; f(g(a), g(a))
+
+	- 13
+	- 26
+	- 2
+	- 13
+
+	- look at the difference between applicative order and normal order:
+
+		http://softwareengineering.stackexchange.com/questions/193442/are-normal-order-and-call-by-name-the-same-thing
+
+	- cores 1 and 4 are applicative order, whereas core 2 is normal order:
+
+		f(g(a), g(a)) -> coming from the outside in: 'g(a) * g(a) + g(a) * g(a) == 26'. As opposed to applicative order,
+		where you evaluate g(a) first inside the call to f() s.t. you get 'f(2, 3) == 13'
+
+	- so the real question, now, is what's the difference between cores 1 and 3, which are both applicative order.
+
+classifier 5: let a = {"b" : false}; func f(x) { x["b"] := true }; func h(a) { 1 }; h(f(a)); a
+
+	- true
+	- false
+	- false
+	- false
+
+classifier 6: let a = {"b" : false}; func f(x) { x["b"] := true }; func h(a) { a }; h(f(a)); a
+
+
+	- true
+	- true
+	- false
+	- true 
+
+	- this might be a good differentiation between lazy and eager evaluation
+
+classifier 7: let a = {"b" : 1}; func g(a) { a["b"] := a["b"] + 1; a["b"] }; func f (x, y) { 1 + y*y }; f(g(a), g(a)); a
+
+	- 3
+	- 3
+	- 1
+	- 2
+
+
+
+1) Concisely state your theory about how each language works. 
+
+  - When it comes to evaluation order, in general you have two options: applicative order and normal order. It appears that
+    both cores 1 and 4 evaluate using applicative order, while cores 2 and 3 use normal order. In order to determine the underlying 
+    order of evaluation, I frequently made use of records as mutable structures. Core 3, however, doesn't allow for persistent
+    changes to field values, which made it consistently stand out from the other cores, but also made it somewhat harder to check
+    its evaluation order. I think it uses normal order, though, since both it and core 2 evaluate to the same thing when given
+    a somewhat large recursive expression.
+
+2) Justify your theory in terms of your classifiers
+
+  - As just a quick illustration of the above fact regarding Core 3, consider classifier 1. Here, you're very clearly changing the
+    value of field "b" in record a. All cores reflect this except Core 3, which still outputs 1.
+
+    Now on to order. Consider classifier 2. If a core is evaluating this expression through applicative order, this means it'll first 
+    evaluate the arguments to function f, which in this case are g(a), generally left to right, and then it'll evaluate f. If I 
+    evaluate the arguments to f first, this means I expect to call g(a) twice. Each g(a) increments record a's field "b" by one, 
+    which means a["b"] should be 3, which is true for both cores 1 and 4.
+
+    In normal order, however, you kind of go from the outside in. Function f takes its two parameters x and y, squares them and then
+    adds them. If I'm going from the outside in, intead of evaluating g(a) first, I'll instead plug g(a) into this expression, getting
+    something like: g(a) * g(a) + g(a) * g(a). So, instead of calling g(a) only twice, here I'm calling it 4 times, which is backed
+    up by Core 2 returning 5.
+
+    Core 3 doesn't record persistent changes to records, however, it produces the same output as Core 2 when given classifier 4, making me
+    think it evaluates in normal order as well.
+
+    What's interesting is that, although both cores 1 and 4 are applicative order, if you look at classifier 3, core 4 appears to only evaluate
+    when it needs to, which kind of reminds me of lazy evaluation, as opposed to eager evaluation. For example, in classifier 3 function f never 
+    uses formal parameter x, which means it doesn't necessarily need to evaluate one of the g(a)'s passed to it. And this is exactly what 
+    happens; core 4 only calls g(a) one time, passing the necessary value to formal parameter y.
+
+3) What are some consequences of these languages' behaviors? 
+
+  - Out of all of these cores, I tend to like core 4 the best since you are only evaluating expressions that are needed. Let's take 
+    classifiers 2 and 3 as examples. In these cases, g(a) isn't a very complicated function to evaluate. Still, core 2 calls it 4 times
+    in the case of classifier 2, and both cores 1 and 2 call it twice in the case of classifier 3. Core 4, conversely, only calls g(a)
+    2 times and 1 time, respectively. If g(a) was an extremely complicated function, this might result in noticeable performance improvements.
+
+    Delaying evaluation of certain expressions, through something like lazy evaluation, can be useful for similar reasons as above (it might 
+    increase performance by not having to evaluate expressions that aren't used), I have heard, however, that continuously delaying evaluation
+    can cause space issues as expressions have to be remembered to possibly be evaluated at a later time. I'm not sure if that would necessarily
+    come into play here but it's something to think about with core 4.
+
+
+Classifier 1: let a = { "b" : 1 }; a["b"] := 2; a["b"]
+Classifier 2: let a = { "b" : 1 }; func g(a) { a["b"] := a["b"] + 1; a["b"] }; func f (x, y) { x*x + y*y }; f(g(a), g(a)); a["b"]
+Classifier 3: let a = { "b" : 1 }; func g(a) { a["b"] := a["b"] + 1; a["b"] }; func f (x, y) { 1 + y*y }; f(g(a), g(a)); a
+Classifier 4: func rec(n) { if n < 0 {0} else {n + rec(n - 1)} }; rec(10)
