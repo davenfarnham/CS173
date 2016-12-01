@@ -1,0 +1,46 @@
+- difference between an up-cast and a down-cast
+
+	- upcasting: casting an object to a supertype
+	- downcasting: casting to a subtype
+
+	  again, when thinking about subtypes, its the opposite of what you'd think. Let's say we have two objects
+	  object A and object B:
+
+		object a { "a" : 1 }		object b { "a" : 2, "b" : true }
+
+	  thinking mathematically, we might suppose (object A) is a subtype of (object B) but this is not the case.
+	  Consider a function that expects an object of type A. In this case, I can pass it either object A or B, 
+	  since both have the necessary field "a". The reverse, however, is not valid. Therefore, object B is a subtype
+	  of object a:
+
+			object b :> object a
+
+	  I would think upcasting would always be a valid operation since object B has all the fields of object A.
+	  Downcasting, though, might be dangerous since object A doesn't have field "b", so if you downcast an object A
+	  to an object B then pass it to a function that expects an object B, I would think you could get an error. 
+
+- the expression problem 
+  (how to avoid casting and thus be able to statically check programs)
+
+	- he begins this discussion by talking about advantages and disadvantages to objects and functional ADTs.
+
+		- in general, ADTs make it very easy to add functionality but not cases (since you'd have to rewrite code
+		  inserting an additional case, which might not be possible if source code isn't shipped with a project
+		  and you just have an executable).
+		
+		  For functions, though, it's easy. Simply create a new function that matches over cases.
+
+		  Objects, though, make adding cases easy since you can simply create a new class that inherits from some super class,
+		  and since this is then a subtype, fuctions will accept this new subtype. 
+
+		  But let's say the new class adds new functionality, let's say a method m(). If a function thats an object from the
+		  super class and calls m(), it must do an explicit downcast to the new object.
+
+			- an explicit down cast like this basically makes this a dynamic problem you can't statically check.
+			  The object you're downcasting might be ok, but then again it might not be ok, and you'll only
+			  know at runtime. 
+
+		- furthermore, let's say you create a new class of objects, then upcast to call a method. This method might
+		  create an object that doesn't have all the functionality of the original object (think of the playing, kissing, 	
+		  spellcasting frog that's upcast to call kiss(), which creates a prince but this prince is one who can't spellcast(),
+		  meaning new Frog("f").kiss().spellcast() might return a method not found error). 

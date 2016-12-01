@@ -1,0 +1,53 @@
+- garbarge collection:
+
+	- reference counting: basically you keep track of the number of pointers to blocks of memory and only 
+			      garbage collect when the reference # equals 0.
+
+
+	
+		------
+		|    |		 ----- 		-----
+	stack	|    |     --->  | 2 |    --->  | 1 |
+		|    |		 |___|	  	|___|
+		|    |		   <\		 /
+		------		     \		/
+				      \ ----- </
+					| 1 |
+					|___|
+
+
+	  the problem with this picture is that there's a loop; once you lose the reference from the stack, all of
+	  this memory is essentially unreachable, however, just using reference counting none of the blocks in the heap
+	  would degenerate to 0.
+	
+		- have to manage loops or the user has to actively decrement one of the objects to 0, which will 
+		  propogate to the other objects.
+
+	- mark and sweep: once you run out of memory to allocate, mark all active allocations that are reachable and then 
+			  SWEEP ACROSS THE ENTIRE HEAP, freeing objects that haven't been marked.
+
+				- O(m) | m = # of active allocations
+				- O(h) | h = size of heap
+
+	- he makes a reference to malloc(). In the implementation in CS33, you have an explicit free list s.t. when you
+	  try to malloc new memory you first check the free list. If there's space, you use it. This free list will
+	  coalesce blocks that are adjacent on the heap to help minimize fragmentation. 
+
+	  The way he describes malloc() is something that maintains multiple lists of varying sizes. So, for example, you
+	  might have a free list of size 8, of size 16, etc. These lists are then in a tree structure, making it logarithmic
+	  in search. 
+
+	  Let's think about this in terms of complexity. 
+
+		- malloc():
+
+			Implementing a first-fit explicit free list means, in the worst case, malloc() runs 
+			{O(n) | n = # of objects in the free list}. This will obviously be slower than a tree 
+			implementation that runs O(log(n)).
+
+		- free()
+
+			If you're simply prepending, this will be O(1). Coalescing free blocks could, however, 
+			run {O(n) | n = # of objects in the free list}. So naive freeing runs O(1) while coalescing
+		  	runs O(n). For the tree implementation, I think it'd be: O(log(n) + n) | log(n) comes from traversing
+			the tree finding where to put the object, while n still comes from coalescing the block.
