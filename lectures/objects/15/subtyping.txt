@@ -40,7 +40,6 @@
 	  by requiring you to call it with parameters. Now, through the parameters you pass to it you give it the kind of permissions you want. This
 	  is more explicit as you have to pass it parameters.
 
-
 		- POLA: principle of least authority
 
 	- so instead of calling scipy, you call an object with scipy in it that also has some other logic. For example, it might limit the number of

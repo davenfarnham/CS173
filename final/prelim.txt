@@ -1,0 +1,57 @@
+- normal OO behavior:
+
+	- subtyping
+
+		- (1) check to see how casting works. For example, given an object {P} and an object {A} that 
+		      extends {P}, given a method that expects a {P}, can I cast it to an {A} and then call a field
+		      in {A}? Does this check statically? What about at runtime? (Nov 18th)
+
+		- (2) Check to see that the selector in the field table gives priority to cast over instantiation type.
+
+		- (3) Check to see that method is determined by instantiation and not static type
+
+		- (4) contravariance vs covariance vs invariance (15)
+
+	- check and see if python exhibits the 'expression problem'
+
+	- you can use isinstance(): gets rid of casting; does this work? You wouldn't be able to statically type check
+	  this.
+
+- unconventional behavior:
+
+	- multiple inheritance: test that definitions are depth-first vs. breadth-first
+
+	- try deleting an attribute, as mentioned in the manual, then pass that object to a method that expects the object 
+	  to have certain fields (the one you deleted)
+
+	- scope:
+
+		- there are different levels: inner, middle, outer
+			- all variables not in the innermost scope are read only, meaning if you try to write to them
+			  you'll create a new local variable in scope.
+			- class definitions place another variable in the local scope
+
+		- (1) create a function with a local variable, then a class. Reference the function's local variable
+		      within the class. It should create a read-only s.t. outside the class, the function's local variable
+		      shouldn't be changed even if you tried to change it in the class.
+
+		      Now, create a variable of the same name in the class; this should save changes in state.
+
+			- deals with mutability
+
+	- __init__: a function that is called immediately when an object is created; can I get weird behavior from this?
+
+	- difference between method objects and function objects?
+		- every method object gets automatically passed a pointer to its object; the argument list is therefore always + 1
+		  whatever you actually pass the method
+
+	- you can create structs and then pass them into functions that expect objects? This seems bad.
+		- 9.7
+
+- static type system:
+
+	- what are the motivations behind a static type system vs. runtime errors?
+
+	- he talked a bit about scripting languages that can basically accept unions of types. So, for example,
+	  a Num | Object, etc. See if python can handle these kind of type ambiguities where essentially you have
+	  if conditionals control the flow of the program preventing runtime type errors. 

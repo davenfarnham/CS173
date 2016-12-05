@@ -76,5 +76,3 @@
 
 	- I think the way it works is that fields are determined by the static type, while methods are defined by the 
 	  object it is instantiated as.
-
-
