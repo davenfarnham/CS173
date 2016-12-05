@@ -1,0 +1,80 @@
+- If I have a couple objects (A, B) that extend some super class (P), and some method
+  m(P :: super class), can that method use fields defined in A and B?
+
+			     P: {}
+
+	A : { "a" : Num }		B : { "b" : String }
+
+	m(p :: P) {
+	  p.a		// this should be a type error. A and B are subtypes of P, 
+			// but there's no promise that p is an {A} and not a {B} or
+	}		// simply a {P}
+
+- what we can do, though, is use casting:
+
+	m(p :: P) {
+	  (A) p.a		
+	}
+
+	this tells the type checker statically that 'p' is of class {A}, so statically this
+	should type check.
+
+	casts have a runtime cost in Java. If I cast an object 'p', for example, as an {A}
+	Java will at runtime check to see if 'p', when instantiated, was actually of type {A}
+	or a subtype of {A}.
+
+- Let's say class {C} extends {A} defined like this:
+
+	C : { "a" : Bool }
+
+	if I run a function on [new C().a] this'll return a Bool. If, instead, I do something
+	like this: [((A) new C()).a] this'll return a Num since the selector into the field
+	table is based on the cast and not necessarily the instantiation type.
+
+- super interesting case in Javascript:
+
+	function fromOrigin(p) {
+	  if (typeof p === "object") {
+	    return Math.sqrt(p.x * p.x + p.y * p.y);
+	  }
+	  else
+	    return Math.abs(p);
+	}
+
+	This function very clearly returns a number, but what's the type of its
+	parameter 'p'? Well, it could be: Num | Object
+
+- mutation is type invariant 
+
+- the example he uses in class:
+
+	Class C1 {
+	  field x : Num;
+	  method(d : Num) -> Num {
+	    this.x + 10
+	  }
+	}
+
+	Class C2 extends C1 {
+	  field x : Num;
+	  method(d : Num) -> Num {
+	    this.x + 20
+	  }
+	}
+
+	let o : C1 = new C2();
+	o.x := 1;
+	o.m(1729)
+
+	-> 20
+	-> 11
+	-> 21
+
+	- when you instantiate a new object, the type you give it defines the fields it can select. But this
+	  doesn't mean that methods are also like this. It appears core 3's method is defined by the object it is,
+	  core 2's is defined by the static type, and it's unclear what's going on with core 1.
+
+	- I think the way it works is that fields are determined by the static type, while methods are defined by the 
+	  object it is instantiated as.
+
+
