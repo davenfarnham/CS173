@@ -1,0 +1,27 @@
+- subtyping:
+
+- type-checking
+
+	- For python, suitability is checked at runtime. Python employs duck-typing, meaning given a function 'f', an object's
+	  suitability for that function is determined not by the type of object or the class that object was instantiated
+	  as, but rather the presence or absence of certain fields / methods. 
+
+	  So, for example, in classifier [tc_1.py], even though A and B are different classes of objects, since both have a 
+	  method 'p' they can both be passed to function 'f'. The exact same objects in [tc_2.py], though, with renamed methods
+	  results in an error.
+
+	- Duck typing seems like it would cause very different behavior depending on the input. A function like:
+	  
+		def f(a, b):
+ 		  return a * b
+
+	  could validly be run with:
+
+		f(1, 2) => 2
+		f([1, 2], 2) => [1, 2, 1, 2]
+
+	  meaning it could take (Num | List, Num) as input and then return a Num or a List depending, on the input types.
+
+- types of error
+
+	- [tc_2.py]: attribute error
