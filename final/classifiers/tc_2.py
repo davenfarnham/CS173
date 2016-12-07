@@ -9,8 +9,10 @@ class A:
   def p(self):
     return "I'm in A"
 
-# define Class
+# define a Class B
 class B:
+  h = 173
+
   def b(self):
     return 173
 

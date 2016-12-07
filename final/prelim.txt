@@ -4,24 +4,25 @@
 
 		- (1) check to see how casting works. For example, given an object {P} and an object {A} that 
 		      extends {P}, given a method that expects a {P}, can I cast it to an {A} and then call a field
-		      in {A}? Does this check statically? What about at runtime? (Nov 18th)
+		      in {A}? Does this check statically? What about at runtime? (Nov 18th)					(no static type)
 
-		- (2) Check to see that the selector in the field table gives priority to cast over instantiation type.
+		- (2) Check to see that the selector in the field table gives priority to cast over instantiation type. 	(you can't really cast objects)
 
-		- (3) Check to see that method is determined by instantiation and not static type
+		- (3) Check to see that method is determined by instantiation and not static type				(no static type)
 
-		- (4) contravariance vs covariance vs invariance (15)
+		- (4) contravariance vs covariance vs invariance (15)								(doesn't apply)
 
-	- check and see if python exhibits the 'expression problem'
+	- check and see if python exhibits the 'expression problem'								(can't really do the same - not byte code)
 
-	- you can use isinstance(): gets rid of casting; does this work? You wouldn't be able to statically type check
+	- you can use isinstance(): gets rid of casting; does this work? You wouldn't be able to statically type check  	(TODO in talk about static)
 	  this.
 
 - unconventional behavior:
 
-	- multiple inheritance: test that definitions are depth-first vs. breadth-first
+	- multiple inheritance: test that definitions are depth-first vs. breadth-first						(COMPLETED)
+		- will something in the second class, with the same name, over write something from the first class?
 
-	- try deleting an attribute, as mentioned in the manual, then pass that object to a method that expects the object 
+	- try deleting an attribute, as mentioned in the manual, then pass that object to a method that expects the object 	(COMPLETED)
 	  to have certain fields (the one you deleted)
 
 	- scope:
@@ -39,7 +40,7 @@
 
 			- deals with mutability
 
-	- __init__: a function that is called immediately when an object is created; can I get weird behavior from this?
+	- __init__: a function that is called immediately when an object is created; can I get weird behavior from this?	(PASS)
 
 	- difference between method objects and function objects?
 		- every method object gets automatically passed a pointer to its object; the argument list is therefore always + 1
@@ -47,6 +48,9 @@
 
 	- you can create structs and then pass them into functions that expect objects? This seems bad.
 		- 9.7
+
+	- can I take an object, then add instance variables to it like I can do with structs above? Does this mean I'm 		(COMPLETED)
+	  effectively creating a subtype of the original object? Can I still change its class variables?
 
 - static type system:
 

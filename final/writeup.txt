@@ -1,27 +1,49 @@
-- subtyping:
+- intro [basic_1.py; basic_2.py; tc_1.py; tc_2.py]
+
+	- brief intro to my limited background w/ OO, which relates to what I might think is conventional.
+
+	- Unlike some of the examples in class, you don't really cast objects to different classes in Python. You can cast things,
+	  like if I'm given an int "i" I can cast it to a string with str(i), or if I'm given an object I can cast it to a string, 
+	  but it doesn't seem like you cast between classes or objects.
+
+	  Since you never really explicitly declare the type of variables like you do in C, I realized I didn't know python's
+	  built-in types. If you run [basic_1.py], you get a dynamic type error at runtime noting you can't add a 'str' to an 'int'.
+
+	  Running [basic_2.py] reveals a few more built-in types, notably 'classobj' and 'instance'. Furthermore, what's interesting in this 
+	  classifier is that although instances of class A and B are different classes, they have the same type: 'instance'. If you compare them, too, 
+	  they come back as equivalent. This starts to hint at the way things are typed in Python.
+
+	  Python is dynamically typed, meaning it is type checked at runtime instead of at compile time. It's also duck-typed, meaning if I have
+	  a function "f" that takes an object, an object's suitability for that function is determined not by the type of object or the class that 
+	  object was instantiated from, but rather the presence or absence of certain fields / methods. In classifer [tc_1.py], for example, I can
+	  pass an instantiation of either A or B to function "f" since both have a method "p". [tc_2.py], on the other hand, doesn't work - it's 
+	  the exact same as before, but now with method "p" renamed as "b".
+
+- features [gen_1.py; mi_1.py; mi_2.py; mi_3.py; 
+
+	- general: In terms of precedence, if a method and variable have the same name, which ever was defined last gets precedence. In [gen_1.py], 
+ 	  for example, the instantiation of A returns an object with a method named 'a' while the instantiation of B returns an object with a variable
+	  named 'b'. While I think this is fine, since methods and variables are called differently (with a method defined as an application a()), I think
+	  it would also make sense to allow variable names and methods to share the same namespace. 
+
+	- modifying classes: An interesting aspect of objects in python is the ability to modify them after instantiation. So, for example, after
+	  you've instantiated an object, you can then add additional attributes to it, essentially extending the class for a particular object [add_1.py].
+	  When you add attributes to an object, you aren't changing the Class definition, instead, you're only changing a particular instantiation of the
+	  class [add_3.py]. What's interesting, though, is that class variables still reflect changes to objects that have been changed to no longer
+	  conform to the blueprint of a Class [add_2.py].
+
+	- multiple inheritance: python allows objects to inherit from multiple classes. [mi_1.py] gives a quick example of this.
+	  What's interesting is that, in the above example, class C inherits in a depth first fashion [mi_2.py]. So, let's say I pass an instantiation 
+	  of Class C to a function "f". If C inherits from multiple classes, say A and B, function "f" will check for a valid attribute in A and any 
+	  class A inherits from before looking in B; so it checks for valid attributes depth-first. This is highlighted in [mi_3.py] where object
+	  D finds method "p" in A, a class B inherits from, before looking for that same method in object C.
 
 - type-checking
 
-	- For python, suitability is checked at runtime. Python employs duck-typing, meaning given a function 'f', an object's
-	  suitability for that function is determined not by the type of object or the class that object was instantiated
-	  as, but rather the presence or absence of certain fields / methods. 
+	- duck typing
 
-	  So, for example, in classifier [tc_1.py], even though A and B are different classes of objects, since both have a 
-	  method 'p' they can both be passed to function 'f'. The exact same objects in [tc_2.py], though, with renamed methods
-	  results in an error.
+	- changing fields in objects
 
-	- Duck typing seems like it would cause very different behavior depending on the input. A function like:
-	  
-		def f(a, b):
- 		  return a * b
+	- "struct like"
 
-	  could validly be run with:
-
-		f(1, 2) => 2
-		f([1, 2], 2) => [1, 2, 1, 2]
-
-	  meaning it could take (Num | List, Num) as input and then return a Num or a List depending, on the input types.
-
-- types of error
-
-	- [tc_2.py]: attribute error
+	- multiple return types (like from lecture) (static_1.py)

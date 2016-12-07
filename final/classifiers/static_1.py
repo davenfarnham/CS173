@@ -1,7 +1,8 @@
 #!/usr/bin/env python2.7
 
 #
-# Example of duck typing
+# Example of duck typing: f can take either two ints and return
+# an int, or a list and an int and return a list
 #
 
 def f(a, b):

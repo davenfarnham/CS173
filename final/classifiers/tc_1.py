@@ -11,8 +11,10 @@ class A:
   def p(self):
     return "I'm in A"
 
-# define Class
+# define a Class B
 class B:
+  b = 173
+
   def p(self):
     return 173
 
