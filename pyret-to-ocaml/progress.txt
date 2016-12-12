@@ -1,0 +1,45 @@
+Dec 10th, 2016:
+
+	- started: 
+
+		(1) added a new prologue including "Core.Std"
+		(2) added support for:
+
+			(2.1) s-id
+			(2.2) s-num
+
+				- if num is not an integer, add decimals for float support
+
+			(2.3) s-bool
+			(2-4) s.str
+
+Dec 11, 2016:
+
+	- functions:
+
+		- the way he seems to be doing it is he filters out the stmts of the body
+		  s.t. he compiles 'lets' and 'vars' first - do placement of 'vars' and 'lets'
+		  not matter in the sequence of statments?
+
+	- completed:
+
+		- added ";;" to statements
+
+			- 'p2a(p).block.stmts' returns a list of statements. Take this list, add semicolons
+			  in between the stmts, then call compile-expr(e)
+
+	- todo:
+
+		(2) switch order of function compilation; check_1.ml
+
+		(3) functions that take no arguments, give them unit parameter ()
+
+Questions:
+
+	- In show(), why do you need "" in the block near the end of the function?
+
+Possible Optimizations:
+
+	- I go through the list of statements adding ";;" in between them, I then traverse the same list
+	  calling compile-expr(e). Can I combine these two: insert-semi() and compile-expr() s.t. it only
+	  traverses the statement list once instead of twice?
