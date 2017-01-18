@@ -1,0 +1,50 @@
+- to install pyret to the command line:
+
+	1) make sure you've downloaded node and npm. To check the version of each of these:
+
+		npm --version
+		node --version
+
+	2) one key thing I did was install node globally so that it isn't local to a particular
+	   directory. to do this, run 
+
+		'npm install npm@latest -g'
+
+	3) download the github repo for pyret-lang
+
+	  when I tried to make and run pyret programs, it'll sometimes throw errors. In this case, 
+	  simply download the required packages globally:
+
+		'npm install [package] -g'
+
+	4) once everything is installed, you can compile with this:
+
+		node build/phaseA/pyret.jarr \
+		--build-runnable [infile.arr] \
+		--outfile [outfile.js] \
+		--builtin-js-dir src/js/trove/ \
+		--builtin-arr-dir src/arr/trove \
+		--require-config src/scripts/standalone-configA.json
+
+	  and run with:
+
+		node [name of program]
+
+- good guide on $PATH variable:
+
+	https://coolestguidesontheplanet.com/add-shell-path-osx/
+
+	- temporarily add this to the path: PATH=$(pwd)/bin:$PATH
+
+- to install bucklescript:
+
+	** useful: https://github.com/bloomberg/bucklescript/wiki/Create-a-simple-example-with-NPM **
+
+	1) echo "{}" > package.json
+
+	2) echo 'let _ = Js.log "hello bucklescript!"' > hello.ml
+
+	3) /usr/local/lib/node_modules/bs-platform/bin/bsc.exe -I /usr/local/lib/node_modules/bs-platform/ -c hello.ml
+
+	4) node hello.js
+	

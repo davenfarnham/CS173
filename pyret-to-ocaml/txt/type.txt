@@ -1,0 +1,126 @@
+- I think there are differences when you define type:
+
+	for example, in ocaml, if I say:
+		
+		type store = int list ;;
+
+	then I can write a function like this:
+
+		let f l = 
+		  match l with
+		  | hd :: tl -> hd
+		  | _ -> raise Error
+		;;
+
+	that is polymorphic in that it can take any list or 'store', since store is essetially
+	just a renaming for an int list. So if something is structurally equivalent, it works.
+
+
+- If, however, I define store like this:
+
+		type store = STORE of int list ;;
+
+	then the above definition of f will no longer work. Now, f will have to explicitly 
+	name STORE:
+
+	let f' l = 
+	  match l with 
+	  | STORE(hd :: tl) -> hd 
+	  | _ -> raise Error 
+	;;
+
+
+- what's the analagous behavior in pyret?
+
+	- in pyret, you have 'type' definitions and 'data' definitions. Type definitions are essentially just renamings:
+
+		type New-num = Number
+
+	  I'm pretty sure this is only useful when dealing with function annotations, since I can't create a New-num, yet, 
+	  a function that takes a Number as an argument can also take a New-num:
+
+		fun f(x) -> New-num:
+		  173
+		end 	# this compiles and runs
+
+	- so I think I might want to tackle type definitions when I'm trying to tackle function annotations in general.
+
+	- data is a little different since they all get converted to records, so none of the basic operators will work on them,
+	  so you don't need to worry about them in terms of type t
+
+- another big question is whether I need to add these types to my definition of 't'?
+
+	- maybe I need to add those things that are defined as 'types' but not as 'data'
+
+	- maybe you add things defined with 'type' to the definition of 't', then in functions
+	  handling the new definitions is you run across the new type, simply recur in it:
+
+		type t = I of int | F of float | S of string | B of bool | L of t list | Storecell of t ;;
+
+		let t_ol op l r : t =
+  		  matches ----
+
+			| Storecell(s) -> t_ol op s r ...
+
+	  I don't believe there's a constructor for a simple type definition
+
+-       
+     data StoreCell:
+        | store_cell(loc :: String, value :: Number)
+        | new_cell(loc :: String)
+     end 
+      
+     type Store = List<StoreCell>
+
+     so what is needed here? assuming you've defined t as:
+
+	type t = I of int | F of float | S of string | B of bool | L of t list ;;
+
+	type store_cell = {loc: t; value: t;} ;;	// t since in pyret code these are basic values
+	type new_cell = {loc: t;} ;;
+
+	type storecell = STORE_CELL of store_cell | NEW_CELL of new_cell ;;
+
+	type store = storecell list ;;
+
+	- ok, so to correctly compile this:
+
+		1) anything defined as 'type' compile and add the name of the datatype to type t. So, for example, 
+		   this would turn the above into:
+
+			(* compile new type *)
+			type Store = storecell list ;;
+
+			(* add type to unitype *)
+			type t = I of int | F of float | S of string | B of bool | L of t list | STORE of store | STORECELL of storecell ;;
+
+		2) next compile data, which will be a little different:
+
+			(* compile variant branches turning them into records *)
+			type store_cell = {loc: t; value: t;} ;;
+			type new_cell = {loc: t;} ;;
+
+			(* compile hierarchical data term *)
+			type storecell = Store_cell of store_cell | New_cell of new_cell ;;
+
+		3) you need to add the hierarchical data term as a type t, too, since all lists are of type t, so storecell must be
+		   a type t.
+
+		3) advantages of doing it like this:
+
+			- just like pyret, you can reference the fields of the data variants by their names
+
+- write a bunch of functions converting t -> specific type, pattern match based on type
+  in PYRET ANNOTATION not in ocaml.
+
+	type t = I of int | S of string ;;
+
+	(* get to to_int matching on the type annotation in pyret *)
+	let to_int (t_type : t) : int = 
+          match t_type with
+	  | I(i) -> i
+	  | _ -> raise TypeError
+	;;
+
+        let f (i : int) = i + 4 in
+          f (to_int (I 4)) ;;

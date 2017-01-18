@@ -1,0 +1,29 @@
+Design:
+
+	Control Flow:
+
+		(1) parse program into s-expressions with p2a(). 		(linear in the size of the program, 'n')
+		(2) filter the list of statements for functions.		(linear in the size of the list, 'm')
+		(3) create records of expressions.				(linear in # of functions, 'p')
+		(4) call compile-exprs.						(linear in the size of the list, 'm')
+
+		compile-exprs -> compile-stmts -> compile-expr
+
+
+	For Functions:
+
+		(1) find all applications in the function's stmts		(linear in size of body-stmts, 'b')
+		(2)
+
+	For Numbers:
+
+		(1) change everything to a float
+
+Optimizations:
+
+	So far, it looks like hits to performance could come in the main compile() function and the functions to compile functions:
+
+				pyret-to-racket					pyret-to-ocaml
+		compile(): 	      O(m)					O(2m + n + p)
+
+		s-fun:	              

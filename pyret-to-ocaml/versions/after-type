@@ -1,0 +1,1081 @@
+import parse-pyret as P
+import ast as A
+
+# Pass to compile-expr a record with additional information
+# useful for constructing the syntax of ocaml:
+#
+#         e: the expression to compile
+#         b: a flag denoting whether you're in a sub-expression
+#         p: whether previous expr was an s-fun
+#         n: whether next expr is an s-fun
+#         m: mutable variables in scope
+#
+# I define wrapper types in ocaml that cover ints, floats, strings, bools,
+# and lists. I then redefine certain builtin operators, allowing me to give
+# the ocaml code similar behavior to pyret code. This allows me to work
+# with types in a way consistent with expectations in pyret: overloaded
+# binary operators like '+', if test-blocks requiring boolean values, etc.
+#
+# I've yet to add support for certain keywords, which might affect
+# the cases below: 'list', 'shadow', etc. Right now the code doesn't
+# support shadowed identifiers.
+#
+# Additionally, I have some support for assert statements ('is', 'is-not')
+# but not yet for other CheckOps.
+
+fun p2a(py-prog :: String):
+  P.surface-parse(py-prog, "")
+  # second argument is program name for srclocs
+end
+
+# package expression with additional information
+fun create-rec(e, b, p, n, m):
+  {exp: e, stmt: b, prev: p, next: n, mut: m}
+end
+
+# reset flags when you're not in a function
+fun negate-rec(e, m):
+  create-rec(e, false, false, false, m)
+end
+
+# parse operation correctly
+fun op-helper(o):
+  if (o == "op-") or (o == "op*") or (o == "op/"):
+    "t_num " + '"' + o + '"'
+  else if (o == "op==") or (o == "op=~"): 
+    "t_ol " + '"' + o + '"'
+  else:
+    "t_ol " + '"' + o + '"'
+  end
+end
+
+# function to help with s-ops in assert statements; add future cases here
+fun s-op-helper(o):
+  cases(A.CheckOp) o:
+    | s-op-is(_) => "="
+    | s-op-is-not(_) => "<>"
+    | else => raise("s-op not yet supported")
+  end
+end
+
+# keep track of mutable variables
+fun collect-mutables(s):
+  cases(List) s:
+    | link(hd, tl) => 
+      if A.is-s-var(hd):
+        link(hd.name.id, collect-mutables(tl))
+      else:
+        collect-mutables(tl)
+      end
+    | empty => empty
+  end
+end
+
+# same as map(), but with f taking additional arguments
+fun map-with-args(f, l, b, p, m):
+  cases(List) l:
+    | link(hd1, tl1) => 
+      cases(List) tl1:
+        | link(hd2, tl2) => 
+          link(f(hd1, b, p, A.is-s-fun(hd2), m), 
+            map-with-args(f, tl1, b, A.is-s-fun(hd1), m))
+        | empty => link(f(hd1, b, p, false, m), empty)
+      end
+    | empty => empty
+  end
+end
+
+# compile fun's args
+fun compile-arg-list(fmls):
+  cases(List) fmls:
+    | link(_, _) => map(lam(i): i.id.s end, fmls)
+    | empty => [list: "()"]
+  end
+end
+
+# interpose '::' when cases(List)
+fun compile-cases-list-args(id, args):
+  cases(List) args:
+    | link(hd, tl) => 
+      cases(List) tl:
+        | link(_, _) =>
+          link(hd.bind.id, 
+            link("::",
+              compile-cases-list-args(id, tl)))
+        | empty => link(hd.bind.id, empty)
+      end  
+    | empty => empty
+  end
+end
+
+# compile non-list datatypes in cases' args
+fun compile-cases-args(args):
+  cases(List) args:
+    | link(_, _) => map(lam(i): i.bind.id end, args)
+  end
+end
+
+# compile case branches
+fun compile-cases(cs, m):
+  cases (A.CasesBranch) cs:
+    | s-cases-branch(_, _, id, args, body) =>
+      [list:
+        "|"
+        , 
+        if id == "link": 
+          compile-cases-list-args(id, args) 
+        else: 
+          compile-cases-args(args) 
+        end
+        ,'->'
+        , compile-expr(negate-rec(body, m))
+      ]
+    | s-singleton-cases-branch(_, _, id, body) =>
+      [list:
+        "|"
+        , id
+        , '->'
+        , compile-expr(negate-rec(body, m))
+      ]
+  end
+end
+
+# compile top-level statement
+fun compile-stmt(e, b, p, n, m):
+  compile-expr(create-rec(e, b, p, n, m))
+end
+
+# iterate over list of expressons
+fun compile-stmts(es, b, p, m):
+  map-with-args(compile-stmt, es, b, p, m)
+end
+
+fun compile-expr(r):
+  # if you're compiling a stmt, end with ";;"
+  delim = if r.stmt: ";;" else: "" end
+  cases (A.Expr) r.exp:
+    | s-id(_, id) => 
+      if (r.mut).member(id):
+        [list:
+          "!"
+          , id
+          , delim
+        ]
+      else:
+        [list: id, delim]
+      end
+    | s-num(_, n) =>
+      if num-is-integer(n): 
+        [list: 
+          "("
+          , "I"
+          , num-to-string(n)
+          , ")"
+          , delim]
+      else:
+        # split string to add in decimals
+        frac = string-split(num-to-string(n), "/")
+        num = string-append(frac.get(0), ".")
+        den = string-append(frac.get(1), ".")
+        [list: 
+          "("
+          , "F"
+          , "(" + num + " /. " + den + ")"
+          , ")"
+          , delim]
+      end
+    | s-var(_, id, val) => 
+      ending = if delim == "": "in" else: delim end
+      [list:
+        "let"
+        , id.id
+        , "="
+        , "ref"
+        , compile-expr(negate-rec(val, r.mut))
+        , ending
+      ]
+    | s-frac(_, num, den) =>
+      num-str = string-append(num-to-string(num), ".") 
+      den-str = string-append(num-to-string(den), ".")
+      # Have to do strcat here to avoid spaces maybe introduced later
+      [list: 
+        "("
+        , "F"
+        , "(" + num-str + "/." + den-str + ")"
+        , ")"
+        , delim]
+    | s-bool(_, b) => [list: if b: "(B true)" else: "(B false)" end, delim]
+    | s-str(_, s) =>
+      # Have to use quote marks since print will strip them out
+      [list:
+        "("
+        , "S"
+        , '"' + s + '"'
+        , ")"
+        , delim]
+    | s-op(_, _, op, le, re) =>
+      [list:
+        "("
+        , op-helper(op) 
+        , compile-expr(negate-rec(le, r.mut))
+        , compile-expr(negate-rec(re, r.mut))
+        , ")"
+        , delim
+      ]
+    | s-fun(_, name, _, args, _, _, body, chk, _) => 
+      body-terms = body.stmts      
+      # determine header
+      header = 
+        if r.prev:
+          "and"
+        else:
+          "let rec"
+        end
+      # determine delimiter
+      ending = 
+        if r.next: 
+          "" 
+        else if not(r.stmt):
+          "in"
+        else:
+          delim 
+        end
+      # parens around link
+      paren-tuple = 
+        if name == "link":
+          {"("; ")"}
+        else:
+          { ""; ""}
+        end
+      fun-args = compile-arg-list(args)
+      fun-body = compile-stmts(body-terms, false, false, r.mut + collect-mutables(body-terms)) 
+      check-body = 
+        if chk == none: 
+          empty
+        else:
+          compile-expr(negate-rec(chk.value, r.mut)) + [list: ";;"]
+        end
+      [list:
+        header
+        , paren-tuple.{0}
+        , name
+        , fun-args
+        , "="
+        , fun-body
+        , paren-tuple.{1}
+        , ending
+        , check-body
+      ]
+    | s-lam(_, _, _, args, _, _, body, _, _) =>
+      body-terms = body.stmts
+      [list:
+        "(fun" 
+        , compile-arg-list(args)
+        , "->"
+        , compile-stmts(body-terms, false, false, r.mut + collect-mutables(body-terms))
+        , ")"
+        , delim
+      ]
+    | s-check-test(_, op, _, left, right) =>
+      [list: 
+        "assert"
+        , "("
+        , compile-expr(negate-rec(left, r.mut))
+        , s-op-helper(op)
+        , compile-expr(negate-rec(right.value, r.mut))
+        , ")"
+      ]
+    | s-check(_, _, body, _) => compile-expr(negate-rec(body, r.mut)) + [list: delim]
+    | s-app(_, fe, aes) =>
+      args = 
+        if aes == empty: 
+          "()" 
+        else: 
+          compile-stmts(aes, false, false, r.mut + collect-mutables(aes))
+        end
+      [list:
+        "("
+        , compile-expr(negate-rec(fe, r.mut))
+        , args
+        , ")"
+        , delim
+      ] 
+    | s-if-else(_, brs, els, _) => 
+      [list:
+        map(lam(br):
+            [list: 
+              "if "
+              , "to_bool "
+              , compile-expr(negate-rec(br.test, r.mut))
+              , "then"
+              , compile-stmts(br.body.stmts, false, false, r.mut + collect-mutables(br.body.stmts))
+              , "else"]
+          end, 
+          brs)
+        , compile-stmts(els.stmts, false, false, r.mut + collect-mutables(els.stmts))
+        , delim
+      ]
+    | s-let(_, name, value, _) =>
+      ending = if delim == "": "in" else: delim end
+      [list: 
+        "let"
+        , name.id
+        , "="
+        , compile-expr(negate-rec(value, r.mut))
+        , ending
+      ]
+    | s-let-expr(_, binds, body, _) =>
+      [list:
+        map(lam(bnd):
+            [list:
+              "let"
+              , bnd.b.id.s
+              , "="
+              , compile-expr(negate-rec(bnd.value, r.mut))
+              , "in"]
+          end,
+          binds)
+        , compile-stmts(body.stmts, false, false, r.mut + collect-mutables(body.stmts))
+        , delim
+      ]
+    | s-letrec(_, binds, body, _) =>
+      # use 'and' to declare all but first expr
+      first-expr = binds.get(0)
+      rest-expr = binds.drop(1)
+      var in-delim = true
+      [list:
+        "let rec"
+        , first-expr.b.id.s
+        , "=" 
+        , compile-expr(negate-rec(first-expr.value, r.mut))
+        , map(lam(bnd):
+            block:
+              in-delim := false
+              [list:
+                "and"
+                , bnd.b.id.s
+                , "="
+                , compile-expr(negate-rec(bnd.value, r.mut))
+                , "in"        
+              ]
+            end
+          end,
+          rest-expr)
+        , if in-delim: "in" else: "" end
+        , compile-stmts(body.stmts, false, false, r.mut + collect-mutables(body.stmts))
+        , delim
+      ]
+    | s-block(_, stmts) =>
+      # end all but last expr with ";"
+      last-pos = stmts.length() - 1
+      last-expr = stmts.get(last-pos)
+      rest-expr = stmts.take(last-pos)
+      [list:
+        map(lam(v): 
+            [list:
+              "ignore("
+              , compile-expr(negate-rec(v, r.mut))
+              , ")"
+              , ";"
+            ]
+          end,
+          rest-expr) 
+        , compile-expr(negate-rec(last-expr, r.mut))
+        , delim
+      ]
+    | s-user-block(_, blk) =>
+      compile-expr(negate-rec(blk, r.mut)) + [list: delim]
+    | s-assign(_, id, val) => 
+      [list:
+        id
+        , ":="
+        , compile-expr(negate-rec(val, r.mut))
+        , ";"
+        , delim
+      ]
+    | s-when(_, tst, blk, _) => 
+      # assuming contents of when block always return nothing:
+      # https://github.com/brownplt/pyret-lang/issues/852
+      [list:
+        "if" 
+        , "to_bool "
+        , compile-expr(negate-rec(tst, r.mut))
+        , "then"
+        , "ignore("
+        , compile-stmts(blk.stmts, false, false, r.mut + collect-mutables(blk.stmts))
+        , ")"
+        , "else"
+        , "()"
+        , delim
+      ]
+    | s-cases(_, _, val, brs,_) => 
+      [list:
+        "("
+        , "match"
+        , compile-expr(negate-rec(val, r.mut))
+        , "with"
+        , map(lam(br):
+            [list:
+              compile-cases(br, r.mut)
+            ]
+          end,
+          brs)
+        , ")"
+        , delim
+      ]
+    | s-cases-else(_, _, val, brs, els, _) => 
+      [list:
+        "("
+        , "match"
+        , compile-expr(negate-rec(val, r.mut))
+        , "with"
+        , map(lam(br):
+            [list:
+              compile-cases(br, r.mut)
+            ]
+          end,
+          brs)
+        , "| _ ->"
+        , compile-expr(negate-rec(els, r.mut))
+        , ")"
+        , delim
+      ]
+    | s-paren(_, expr) =>
+      compile-expr(negate-rec(expr, r.mut)) + [list: delim]
+  end
+end
+
+fun show(p):
+  fun h(shadow p):
+    if is-List(p):
+      map(h, p)
+    else:
+      print(p)
+    end
+  end
+  block:
+    h(p)
+    ""
+  end
+end
+
+# open Core library
+prelude = ```
+          open Core.Std ;; 
+          let link = List.cons ;;
+          let empty = [] ;;
+          
+          exception TypeError
+          exception Unsupported
+          
+          type t = I of int | F of float | S of string | B of bool | L of t list ;;
+          
+          let to_bool t : bool = match t with | B(b) -> b | _ -> raise TypeError ;;
+          
+          (* string to int -> int -> int function *)
+          let s_to_op s =
+            match s with
+            | "op-" -> ( - )
+            | "op*" -> ( * )
+            | "op/" -> ( / )
+            | _ -> raise Unsupported
+          ;;
+
+          (* string to float -> float -> float function *)
+          let s_to_fop s =
+            match s with
+            | "op-." -> ( -. )
+            | "op*." -> ( *. )
+            | "op/." -> ( /. )
+            | _ -> raise Unsupported
+          ;;
+
+          (* string to 'a -> 'a -> bool function *)
+          let s_to_bop s =
+            match s with
+            | "op>" -> ( > )
+            | "op>=" -> ( >= )
+            | "op<" -> ( < )
+            | "op<=" -> ( <= )
+            | "op==" -> ( = )
+            | "op<=>" -> phys_equal
+            | _ -> raise Unsupported
+          ;;
+          
+          (* redefine overloaded operators for t type *)
+          let t_ol op l r : t =
+            match op with
+            | "op+" ->
+              (match l with
+               | I(a) -> (match r with
+                          | I(b) -> I(a + b)
+                          | F(b) -> F(Float.of_int a +. b) (* contagion *)
+                          | _ -> raise TypeError)
+               | F(a) -> (match r with
+                          | I(b) -> F(a +. Float.of_int b) (* contagion *)
+                          | F(b) -> F(a +. b)
+                          | _ -> raise TypeError)
+               | S(a) -> (match r with
+                          | S(b) -> S(a ^ b)
+                          | _ -> raise TypeError)
+               | L(a) -> (match r with
+                          | L(b) -> L(a @ b)
+                          | _ -> raise TypeError)
+               | _ -> raise TypeError)
+            | "op>" | "op>=" | "op<" | "op<=" as op' ->
+              (match l with
+               | I(a) -> (match r with
+                          | I(b) -> B((s_to_bop op') a b)
+                          | F(b) -> B((s_to_bop op') (Float.of_int a)  b) (* contagion *)
+                          | _ -> raise TypeError)
+               | F(a) -> (match r with
+                          | I(b) -> B((s_to_bop op') a (Float.of_int b)) (* contagion *)
+                          | F(b) -> B((s_to_bop op') a b)
+                          | _ -> raise TypeError)
+               | S(a) -> (match r with
+                          | S(b) -> B((s_to_bop op') a b)
+                          | _ -> raise TypeError)
+               | _ -> raise TypeError)
+            | "op==" | "op<=>" as op' ->
+              (match l with
+               | I(a) -> (match r with
+                          | I(b) -> B((s_to_bop op') a b)
+                          | F(b) -> B((s_to_bop op') (Float.of_int a) b) (* contagion *)
+                          | _ -> B(false))
+               | F(a) -> (match r with
+                          | I(b) -> B((s_to_bop op') a (Float.of_int b)) (* contagion *)
+                          | F(b) -> B((s_to_bop op') a b)
+                          | _ -> B(false))
+               | S(a) -> (match r with
+                          | S(b) -> B((s_to_bop op') a b)
+                          | _ -> B(false))
+               | B(a) -> (match r with
+                          | B(b) -> B((s_to_bop op') a b)
+                          | _ -> B(false))
+               | L(a) -> (match r with
+                          | L(b) -> B((s_to_bop op') a b)
+                          | _ -> B(false)))
+          | _ -> raise Unsupported
+          ;;
+          
+          (* redefine number operators for t type *)
+          let t_num op l r : t =
+            match op with
+            | "op-" | "op*" | "op/" as op' ->
+              (match l with
+               | I(a) -> (match r with
+                          | I(b) -> I((s_to_op op') a b)
+                          | F(b) -> F((s_to_fop (op' ^ ".")) (Float.of_int a) b) (* contagion *)
+                          | _ -> raise TypeError)
+               | F(a) -> (match r with
+                          | I(b) -> F((s_to_fop (op' ^ ".")) a (Float.of_int b)) (* contagion *)
+                          | F(b) -> F((s_to_fop (op' ^ ".")) a b)
+                          | _ -> raise TypeError)
+               | _ -> raise TypeError)
+            | _ -> raise Unsupported
+          ;;
+          ```
+
+fun compile(p):
+  stmts = p2a(p).block.stmts
+  [list: prelude, compile-stmts(stmts, true, false, collect-mutables(stmts))]
+end
+
+fun go(p):
+  show(compile(p))
+end
+
+b0 = ```
+      2 + 2
+      ``` # should be 4
+
+b1 = ```
+     2 + "hi"
+     ``` # should be error
+
+b2 = ```
+     "anno" + "tate"
+     ``` # should be "annotate"
+
+b3 = ```
+     link(1, empty) + link(2, empty)
+     ``` # should be [1; 2] 
+
+b4 = ```
+     1 + 2 + 3.14
+     ``` # should be 6.14
+
+b5 = ```
+     1 + 2 + "hi" + 4
+     ``` # should be error
+
+b6 = ```
+     fun f(x, y): 
+       x - y
+     end
+     
+     f(2, link(1, empty))
+     ``` # should be error 
+
+k0 = ```
+    29
+     ``` # should be 29
+
+k1 = ```
+     29.17
+     ``` # should be 29.17
+
+k2 = ```
+     2/4
+     ``` # should be 0.5
+
+k3 = ```
+     12 == 10
+     ``` # should be false
+
+k4 = ```
+     fun f(x, y): x + y end
+     ``` # should be val f : float -> float -> float = <fun>
+
+k5 = ```
+     fun f(x, y): x * y end
+     ``` # should be val f : float -> float -> float = <fun>
+
+k6 = ```
+     fun f(x):
+       g(x + x)
+     end
+     fun g(y):
+       h(y * y)
+     end
+     fun h(k):
+       k + (k * k)
+     end
+     f(10)
+     ``` # should be 160400
+
+k7 = ```
+     fun f(x):
+       fun g(a):
+         fun j(c):
+           c
+         end
+         j(a + 2)
+       end
+       fun h(b):
+         g(b)
+       end
+       h(x)
+     end
+     fun i(y):
+       f(y)
+     end
+     i(10)
+     ``` # should be 12
+
+k8 = ```
+     fun f(x):
+       fun g(y): 
+         (y * y) 
+       end
+       g(x)
+     end
+     f(10)
+     ``` # should be 100
+
+k9 = ```
+     lam(x): lam(y): y + 2 end(x) end(4)
+     ``` # should be 6
+
+k10 = ```
+      fun f(x):
+        if x == 0: 
+          0 
+        else: 
+          x + f(x - 1) 
+        end
+      end
+      f(5)
+      ``` # should be 15
+
+k11 = ```
+      fun f(x):
+        if g(x) == 0: 
+          0 
+        else: 
+          g(x) 
+        end
+      end
+      fun g(x):
+        if x < 5: 
+          0 
+        else: 
+          x 
+        end
+      end
+      f(5) 
+      ``` # should be 5
+
+k12 = ```
+      fun f(x, y): 
+        x + y 
+      end
+      f(1, 2)
+      ``` # should be 3
+      
+k13 = ```
+      link(1, link(2, empty))
+      ``` # should be [1; 2]
+
+k14 = ```
+      lam(v): v + 2 end
+      
+      ``` # should be float -> float = <fun>
+
+k15 = ```
+      letrec x = 3: x end
+      ``` # should be 3
+
+k16 = ```
+      block: 1 end
+      ``` # should be 1
+
+k17 = ```
+      fun f(x):
+        y = 3
+        z = 4
+        x + y + z
+      end
+      f(4)
+      ``` # should be 11
+
+k18 = ```
+      a = 4
+      fun f(x):
+        y = 3
+        z = 4
+        x + y + z + a
+      end
+      f(4)
+      ``` # should be 15
+
+k19 = ```
+      a = 4
+      fun f(x):
+        y = 3
+        z = 4
+        x + y + z + a
+      end
+      y + f(4)
+      ``` # should be unbound value error
+
+k20 = ```
+      1 + 2 + 3
+      ``` # should be 6
+
+k21 = ```
+      var x = 42
+      x
+      ``` # should be 42
+
+k22 = ```
+      var x = 42
+      x := 173
+      x
+      ``` # should be 173
+
+k23 = ```
+      var x = 42       
+      fun f(y):
+        var k = 5
+        y + k + x 
+      end      
+      f(10)
+      ``` # should be 57
+
+k24 = ```
+      var x = 42       
+      fun f(y):
+        var k = 5
+        y + k + x 
+      end      
+      f(10) + k
+      ``` # should be unbound value error
+
+k25 = ```
+      var x = 5
+      if true: 
+        var y = 6
+        x + y
+      else:
+        x
+      end
+      ``` # should be 11
+
+k26 = ```
+      var x = 5
+      if true: 
+        var y = 6
+        x + y
+      else:
+        y + 5
+      end
+      ``` # should be unbound value error
+
+k27 = ```
+      x = true
+      when x == true:
+        y = 4
+        y + 38
+      end
+      ``` # should be unit
+
+k28 = ```
+      x = true
+      when x == true:
+        y = 4
+        y + 38
+      end
+      173
+      ``` # should be 173
+
+k29 = ```
+      fun f(x): 
+        cases(List) x:
+          | link(hd, _) => hd
+          | empty => 0
+        end
+      end
+      f(link(1, link(2, empty)))
+      ``` # should be 1
+
+k30 = ```
+      fun f(x): 
+        cases(List) x:
+          | link(hd, _) => hd
+          | else => 0
+        end
+      end
+      f(empty)
+      ``` # should be 0
+
+k31 = ```
+      fun f(x):
+        cases(List) x:
+          | link(hd, tl) => 
+            cases(List) tl:
+              | link(_, tl1) => link(hd, f(tl1))
+              | empty => link(hd, empty)
+            end
+          | empty => empty
+        end
+      end
+      f(link(1, link(2, link(3, link(4, link(5, empty))))))
+      ``` # should be [1; 3; 5]
+
+k32 = ```
+      fun map(f, l):
+        cases(List) l:
+          | link(hd, tl) => link(f(hd), map(f, tl))
+          | empty => empty
+        end
+      end
+      
+      fun add_2(l):
+        map(lam(v): v + 2 end, l)
+      end
+      
+      add_2(link(1, link(2, empty))) 
+      ``` # should be [3; 4]
+
+k33 = ```
+      fun f():
+        4 + 47
+      where:
+        f() is 51
+      end 
+      ``` # should produce an assert that passes
+
+k34 = ```
+      fun f():
+        4 + 47
+      where:
+        f() is-not 51
+      end 
+      ``` # should produce an assert that doesn't pass
+
+k35 = ```
+      fun f():
+        4 + 47
+      end
+      check:
+        f() is 51
+        f() + 122 is 173
+      end 
+      ``` # should produce an assert that passes
+
+p0 = ```
+     fun f():
+     3
+     end
+     f()
+     ``` # should be 3
+
+p1 = ```
+     fun f(x): 
+     x * x
+     end
+     f(3)
+     ``` # should be 9
+
+p2 = ```
+     fun f(x):
+     g(x + x)
+     end
+     fun g(y):
+     y * y
+     end
+     f(10)
+     ``` # should be 400
+
+p3 = ```
+     if false: 1 else if false: 2 else: 3 end
+     ``` # should be 3
+
+p4 = ```
+     if true: 1 else if false: 2 else: 3 end
+     ``` # should be 1
+
+p5 = ```
+     if false: 1 else if true: 2 else: 3 end
+     ``` # should be 2
+
+p6 = ```
+     fun sum(n):
+     if n == 0: 1
+     else: n + sum(n - 1)
+     end
+     end
+     sum(100000)
+     ``` # should be 5000050001
+
+p7 = ```
+     fun fib(n):
+     if n == 0: 1
+     else if n == 1: 1
+     else: fib(n - 1) + fib(n - 2)
+     end
+     end
+     fib(30)
+     ``` # should be 1346269
+
+p8 = ```
+     fun rng(a, b):
+     if a >= b: empty
+     else: link(a, rng(a + 1, b))
+     end
+     end
+     rng(0, 10)
+     ``` # should be [list: 0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+
+p9 = ```
+     let x = 3: x + 4 end
+     ``` # should be 7
+
+p10 = ```
+      let x = 3, y = 4: x + y + 7 end
+      ``` # should be 14
+
+p11 = ```
+      letrec x = 3, y = 4: x + y end
+      ``` # should be 7
+
+p12 = ```
+      letrec odd = lam(n): if n == 0: false else: even(n - 1) end end,
+             even = lam(n): if n == 0: true else: odd(n - 1) end end:
+        odd(5)
+      end
+      ``` # should be true
+
+p13 = ```
+      letrec odd = lam(n): if n == 0: false else: even(n - 1) end end,
+             even = lam(n): if n == 0: true else: odd(n - 1) end end:
+        odd(6)
+      end      
+      ``` # should be false
+
+p14 = ```
+      block:
+      1
+      2
+      3
+      end
+      ``` # should be 3
+
+p15 = ```
+      fun f(x):
+      y = 3
+      x + y
+      end
+      f(4)
+      ``` # should be 7
+
+p16 = ```
+      fun f(x):
+      y = 3
+      z = 4
+      x + y + z
+      end
+      f(5)
+      ``` # should be 12
+
+p17 = ```
+      when true: 1 end
+      ``` # should produce nothing
+
+p18 = ```
+      when false: 1 end
+      ``` # should produce nothing
+
+p19 = ```
+      fun f(): x = 3 var y = 4 x + y end
+      f()
+      ``` # should produce 7
+
+p20 = ```
+      fun f():
+      var x = 3
+      x := 4
+      x := 5
+      x
+      end
+      f()
+      ``` # should produce 5
+
+p21 = ```
+      (1)
+      ``` # should produce 1
+
+p22 = ```
+      (lam(x): x + 3 end)(4)
+      ``` # should produce 7
+
+p23 = ```
+      (lam(x) block: 
+      var y = x 
+      y := y + y 
+      y 
+      end)(5)
+      ``` # should produce 10
+
+p24 = ```
+      1/2 - 2/4
+      ``` # should produce 0
+
+p25 = ```
+      "hello"
+      ``` # should produce "hello"
+
+p26 = ```
+      "hello" + " " + "world"
+      ``` # should produce "hello world"

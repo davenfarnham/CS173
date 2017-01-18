@@ -1,0 +1,26 @@
+- program to run:
+
+      fun map(f, l):
+        cases(List) l:
+          | link(hd, tl) => link(f(hd), map(f, tl))
+          | empty => empty
+        end
+      end
+
+      fun add_2(l):
+        map(lam(v): v + 2 end, l)
+      end
+
+      print(add_2(link(1, link(2, empty))))
+
+- time compiling PhaseA:
+
+	real	0m11.667s
+	user	0m10.743s
+	sys	0m1.226s
+
+- using bucklescript:
+
+	real	~0m3.005s 
+	user	~0m2.756s
+	sys	~0m0.260s

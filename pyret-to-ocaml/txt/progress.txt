@@ -34,6 +34,36 @@ Dec 11, 2016:
 
 		(3) functions that take no arguments, give them unit parameter ()
 
+
+Dec 18th, 2016: 
+
+	For a function like this;
+
+	     fun f(x):
+	       x * x
+	     end
+     
+	     f(10)
+
+	the fun.body.stmts is simply a list of the elements inside the function. so, above, 
+	it would be something like 'x * x' operation.
+
+	What he does is make a pass over the fun's stmts and check whether they are 'let' or
+	'var' statements.
+	
+	- what you might be able to do: check for functional applications in a function (if it has a
+	  different identifier). If you find one, compile that first and remove it from the list of pending
+	  expressions to compile.
+
+	let y = 2 in 
+	  let f x z = x + z in
+	    map f [1; 2; 3] 2 ;;
+
+Dec 20th, 2016:
+
+	- made it so that function compilation is in right order
+	- added unit parameter '()' to functions
+
 Questions:
 
 	- In show(), why do you need "" in the block near the end of the function?
@@ -43,3 +73,9 @@ Possible Optimizations:
 	- I go through the list of statements adding ";;" in between them, I then traverse the same list
 	  calling compile-expr(e). Can I combine these two: insert-semi() and compile-expr() s.t. it only
 	  traverses the statement list once instead of twice?
+
+- todo:
+	
+	- package things (no globals)
+	- cleaner way to handle links
+
