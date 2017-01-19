@@ -18,14 +18,17 @@
   2) after adding these things to the type definition ** don't add delimiting ';;' ** add the data defintion, with the above 
   becoming:
 
-  type t = ... | ... | NEWNUM of number | STORE of t list | STORECELL of storecell
+	  type t = ... | ... | NEWNUM of number | STORE of t list | STORECELL of storecell
 
   3) next handle the variants in the data with 'and':
 
-  and store_cell = {loc: t; value: t}	(* assume all types are of type t - you've added everything to t *)
+	  and store_cell = {loc: t; value: t}	(* assume all types are of type t - you've added everything to t *)
 
   4) finally add the name of the data with the variants:
 
-  and storecell = STORE_CELL of store_cell ;;	(* delimiting this final piece with ';;' *)
+	  and storecell = STORE_CELL of store_cell ;;	(* delimiting this final piece with ';;' *)
+
+  5) next, you need to update the functions that deal with the unitype. I think I need to break up the functions and also have
+     an environment to keep track of new types mapped to base types 
 
 *)
