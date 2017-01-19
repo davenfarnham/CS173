@@ -105,6 +105,8 @@ let bool_op op a b =
   | _ -> raise TypeError
 ;;
 
+(* the below will have to have some dynamically generated sections *)
+
 (* branch based on right type *)
 let t_int_right op a r = 
   match r with
