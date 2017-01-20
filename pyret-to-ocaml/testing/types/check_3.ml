@@ -29,6 +29,6 @@
 	  and storecell = STORE_CELL of store_cell ;;	(* delimiting this final piece with ';;' *)
 
   5) next, you need to update the functions that deal with the unitype. I think I need to break up the functions and also have
-     an environment to keep track of new types mapped to base types 
+     an environment to keep track of new types mapped to base types.
 
 *)
