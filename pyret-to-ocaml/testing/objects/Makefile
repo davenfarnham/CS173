@@ -1,16 +1,16 @@
-all: check_7 check_8 check_9 check_10
+all: check_1 check_2 check_3 check_4
 
-check_7: check_7.ml
-	corebuild check_7.native
+check_1: check_1.ml
+	corebuild check_1.native
 
-check_8: check_8.ml
-	corebuild check_8.native
+check_2: check_2.ml
+	corebuild check_2.native
 
-check_9: check_9.ml
-	corebuild check_9.native
+check_3: check_3.ml
+	corebuild check_3.native
 
-check_10: check_10.ml
-	corebuild check_10.native
+check_4: check_4.ml
+	corebuild check_4.native
 
 clean:
 	rm -rf *.native _build

@@ -1,13 +1,3 @@
-(* trying to pull it all together - for this to work you need to keep an environment around 
- * mapping new types -> the basic types they're renaming. So, for example, below you'd have something
- * like this:
- *
- *			{     STORE -> list      }
- *			{ STORECELL -> storecell }
- *			{    NEWNUM -> number 	 }
- *			{  NEWSTRING -> string   }
- *)
-
 exception TypeError
 exception Unsupported
 
@@ -16,7 +6,7 @@ let link a b = a :: b ;;
 let empty = [] ;;
 
 (* basic types: after compiling types and data *)
-type t = N of number | S of string | B of bool | L of t list | STORE of t list (* ADD HERE: type definitions *)
+type t = N of number | S of string | B of bool | L of t list (* ADD HERE: type definitions *)
 
 and number = I of int | F of float
 

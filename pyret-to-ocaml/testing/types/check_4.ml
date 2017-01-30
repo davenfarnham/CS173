@@ -1,11 +1,11 @@
-(* trying to pull it all together - for this to work you need to keep an environment around 
+(* trying to pull it all together - for this to work you need to keep an environment around
  * mapping new types -> the basic types they're renaming. So, for example, below you'd have something
  * like this:
  *
- *			{     STORE -> list      }
- *			{ STORECELL -> storecell }
- *			{    NEWNUM -> number 	 }
- *			{  NEWSTRING -> string   }
+ *                      {     STORE -> list      }
+ *                      { STORECELL -> storecell }
+ *                      {    NEWNUM -> number    }
+ *                      {  NEWSTRING -> string   }
  *)
 
 exception TypeError
@@ -15,16 +15,18 @@ exception Unsupported
 let link a b = a :: b ;;
 let empty = [] ;;
 
-type store_cell = {loc: t; value: t;}
-and storecell = STORE_CELL of store_cell 
+type number = I of int | F of float
+and t = N of number | S of string | B of bool | L of t list | STORE of store | STORECELL of storecell | NEWNUM of newnum | NEWSTRING of newstring | NEWERNUM of newernum
 
-(* add to the basic type definition *)
-and number = I of int | F of float
 and newnum = number
+and newernum = newnum 
 and newstring = string
+and store = t list
+
+and store_cell = {loc: t; value: t;}
+and storecell = STORE_CELL of store_cell ;;
 
 (* basic types: after compiling types and data *)
-and t = N of number | S of string | B of bool | L of t list | STORE of t list | STORECELL of storecell | NEWNUM of newnum | NEWSTRING of newstring ;;
                
 let to_bool t : bool = match t with | B(b) -> b | _ -> raise TypeError ;;
 
